@@ -1,0 +1,38 @@
+import pytest
+from pydantic import SecretStr, ValidationError
+
+from app.config import Settings
+
+
+def test_defaults_are_local_and_safe() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.host == "127.0.0.1"
+    assert settings.debug is False
+    assert settings.allow_public_bind is False
+    assert settings.deepseek_api_key is None
+
+
+def test_non_loopback_binding_requires_explicit_acknowledgement() -> None:
+    with pytest.raises(ValidationError, match="non-loopback binding"):
+        Settings(_env_file=None, host="0.0.0.0")  # noqa: S104 - deliberate security test
+
+    settings = Settings(
+        _env_file=None,
+        host="0.0.0.0",  # noqa: S104 - deliberate security test
+        allow_public_bind=True,
+    )
+    assert settings.host == "0.0.0.0"  # noqa: S104 - deliberate security test
+
+
+def test_debug_is_rejected_in_production() -> None:
+    with pytest.raises(ValidationError, match="debug mode"):
+        Settings(_env_file=None, environment="production", debug=True)
+
+
+def test_deepseek_key_is_stored_as_secret(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-only-secret-value")
+    settings = Settings(_env_file=None)
+
+    assert isinstance(settings.deepseek_api_key, SecretStr)
+    assert "test-only-secret-value" not in repr(settings.deepseek_api_key)
