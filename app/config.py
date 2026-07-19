@@ -1,11 +1,15 @@
 """Typed application configuration with secure defaults."""
 
+import os
 from functools import lru_cache
 from ipaddress import ip_address
+from pathlib import Path
 from typing import Literal
 
 from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 from app import __version__
 
@@ -40,11 +44,21 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    data_dir: Path = Path("./data")
     database_url: str = "sqlite:///./data/investment_tool.db"
+    raw_document_retention_days: int = Field(default=90, ge=1, le=3650)
+    require_external_data_dir: bool = False
     allow_public_bind: bool = False
     deepseek_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices("DEEPSEEK_API_KEY", "INVEST_DEEPSEEK_API_KEY"),
+    )
+    backup_passphrase: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "INVEST_BACKUP_PASSPHRASE",
+            "BACKUP_PASSPHRASE",
+        ),
     )
 
     @model_validator(mode="after")
@@ -56,6 +70,31 @@ class Settings(BaseSettings):
             raise ValueError(
                 "non-loopback binding requires INVEST_ALLOW_PUBLIC_BIND=true and a security review"
             )
+
+        resolved_data_dir = self.data_dir.expanduser().resolve()
+        if self.require_external_data_dir:
+            system_drive = os.environ.get("SYSTEMDRIVE", "C:")
+            if resolved_data_dir.drive.casefold() == Path(system_drive).drive.casefold():
+                raise ValueError("data directory must not be located on the system drive")
+
+        try:
+            database_url = make_url(self.database_url)
+        except ArgumentError as error:
+            raise ValueError("database URL is invalid") from error
+        if (
+            database_url.get_backend_name() == "sqlite"
+            and database_url.database
+            and database_url.database != ":memory:"
+        ):
+            database_path = Path(database_url.database).expanduser().resolve()
+            if not database_path.is_relative_to(resolved_data_dir):
+                raise ValueError("SQLite database must be located inside INVEST_DATA_DIR")
+
+        if (
+            self.backup_passphrase is not None
+            and len(self.backup_passphrase.get_secret_value()) < 16
+        ):
+            raise ValueError("backup passphrase must contain at least 16 characters")
 
         return self
 
