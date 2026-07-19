@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Literal, Protocol, runtime_checkable
 
 from pydantic import AnyHttpUrl, AwareDatetime, Field, JsonValue, model_validator
 
@@ -11,7 +11,7 @@ from app.domain.base import DomainModel, IdempotencyKey, Identifier, Sha256
 from app.domain.documents import DiscoveredDocument, ExternalDocumentContent
 from app.domain.enums import ReportFormat
 from app.domain.evidence import EvidenceExtractionRequest, EvidenceExtractionResult
-from app.domain.portfolio import Asset, MarketSnapshot
+from app.domain.portfolio import Asset, InvestmentProfile, MarketSnapshot, Position
 
 
 class SourceDiscoveryRequest(DomainModel):
@@ -122,6 +122,22 @@ class StorageRecord(DomainModel):
     payload: dict[str, JsonValue]
 
 
+class PortfolioImportRequest(DomainModel):
+    """Local-only input for a future CSV or OCR adapter."""
+
+    source_format: Literal["CSV", "OCR"]
+    filename: str = Field(min_length=1, max_length=255)
+    content: bytes = Field(min_length=1, max_length=10_000_000)
+    content_sha256: Sha256
+
+
+class PortfolioImportResult(DomainModel):
+    profiles: tuple[InvestmentProfile, ...] = Field(default_factory=tuple, max_length=100)
+    assets: tuple[Asset, ...] = Field(default_factory=tuple, max_length=10_000)
+    positions: tuple[Position, ...] = Field(default_factory=tuple, max_length=10_000)
+    warnings: tuple[str, ...] = Field(default_factory=tuple, max_length=1_000)
+
+
 @runtime_checkable
 class SourceAdapter(Protocol):
     adapter_name: str
@@ -182,3 +198,10 @@ class StorageProvider(Protocol):
     async def save_if_absent(self, request: StorageWriteRequest) -> StorageWriteResult: ...
 
     async def get(self, record_type: Identifier, record_id: Identifier) -> StorageRecord | None: ...
+
+
+@runtime_checkable
+class PortfolioImportAdapter(Protocol):
+    adapter_name: str
+
+    async def parse(self, request: PortfolioImportRequest) -> PortfolioImportResult: ...

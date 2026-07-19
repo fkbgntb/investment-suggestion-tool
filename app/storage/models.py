@@ -18,9 +18,10 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
 )
 from sqlalchemy.engine.interfaces import Dialect
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from sqlalchemy.types import TypeDecorator
 
 NAMING_CONVENTION = {
@@ -141,9 +142,15 @@ class PositionRow(SnapshotMixin, Base):
         ),
         UniqueConstraint(
             "workspace_id",
+            "position_id",
+            name="uq_positions_workspace_position",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "profile_id",
             "asset_id",
             "snapshot_at",
-            name="uq_positions_workspace_asset_snapshot",
+            name="uq_positions_workspace_profile_asset_snapshot",
         ),
     )
 
@@ -151,6 +158,46 @@ class PositionRow(SnapshotMixin, Base):
     profile_id: Mapped[str] = mapped_column(String(128))
     asset_id: Mapped[str] = mapped_column(String(128))
     snapshot_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
+class PositionSnapshotRow(WorkspaceScopedMixin, Base):
+    __tablename__ = "position_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "snapshot_id",
+            name="uq_position_snapshots_workspace_snapshot",
+        ),
+        Index(
+            "ix_position_snapshots_workspace_position_generated",
+            "workspace_id",
+            "position_id",
+            "generated_at",
+        ),
+    )
+
+    snapshot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    position_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    asset_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    purpose: Mapped[str] = mapped_column(String(32), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(32), nullable=False, default="1.0")
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
+
+
+class ImmutableSnapshotError(RuntimeError):
+    """Position analysis snapshots are append-only application records."""
+
+
+@event.listens_for(Session, "before_flush")
+def _protect_position_snapshots(
+    session: Session, _flush_context: object, _instances: object
+) -> None:
+    if any(isinstance(row, PositionSnapshotRow) for row in session.dirty):
+        raise ImmutableSnapshotError("position analysis snapshots cannot be updated")
+    if any(isinstance(row, PositionSnapshotRow) for row in session.deleted):
+        raise ImmutableSnapshotError("position analysis snapshots cannot be deleted directly")
 
 
 class TopicRow(SnapshotMixin, Base):
@@ -362,6 +409,12 @@ class AnalysisRunRow(SnapshotMixin, Base):
             ondelete="CASCADE",
             name="fk_analysis_runs_workspace_asset",
         ),
+        ForeignKeyConstraint(
+            ["workspace_id", "position_snapshot_id"],
+            ["position_snapshots.workspace_id", "position_snapshots.snapshot_id"],
+            ondelete="RESTRICT",
+            name="fk_analysis_runs_workspace_position_snapshot",
+        ),
         UniqueConstraint("workspace_id", "analysis_run_id", name="uq_analysis_runs_workspace_run"),
         UniqueConstraint(
             "workspace_id", "idempotency_key", name="uq_analysis_runs_workspace_idempotency"
@@ -370,6 +423,7 @@ class AnalysisRunRow(SnapshotMixin, Base):
 
     analysis_run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     asset_id: Mapped[str] = mapped_column(String(128))
+    position_snapshot_id: Mapped[str | None] = mapped_column(String(128))
     idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
     pipeline_version: Mapped[str] = mapped_column(String(120), nullable=False)
     prompt_version: Mapped[str] = mapped_column(String(120), nullable=False)

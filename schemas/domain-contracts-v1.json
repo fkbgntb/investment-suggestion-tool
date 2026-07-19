@@ -153,6 +153,9 @@
           "title": "Currency",
           "type": "string"
         },
+        "fee_policy": {
+          "$ref": "#/$defs/FundFeePolicy"
+        },
         "fund_code": {
           "maxLength": 32,
           "minLength": 6,
@@ -1299,6 +1302,111 @@
       "title": "ExternalDocumentContent",
       "type": "object"
     },
+    "FeeDataStatus": {
+      "enum": [
+        "UNKNOWN",
+        "USER_PROVIDED",
+        "OFFICIAL_VERIFIED"
+      ],
+      "title": "FeeDataStatus",
+      "type": "string"
+    },
+    "FundFeePolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "effective_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Effective On"
+        },
+        "purchase_fee_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purchase Fee Rate"
+        },
+        "redemption_fee_tiers": {
+          "items": {
+            "$ref": "#/$defs/RedemptionFeeTier"
+          },
+          "maxItems": 100,
+          "title": "Redemption Fee Tiers",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_name": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Name"
+        },
+        "source_url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Url"
+        },
+        "status": {
+          "$ref": "#/$defs/FeeDataStatus",
+          "default": "UNKNOWN"
+        },
+        "verified_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified At"
+        }
+      },
+      "title": "FundFeePolicy",
+      "type": "object"
+    },
     "IdempotencyKey": {
       "additionalProperties": false,
       "description": "Stable key and payload digest required for mutating application operations.",
@@ -1734,6 +1842,194 @@
       "title": "NotificationMessage",
       "type": "object"
     },
+    "PortfolioAIRiskSummary": {
+      "additionalProperties": false,
+      "description": "Privacy-minimized portfolio input permitted to leave the local machine.",
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "asset_type": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "fee_data_status": {
+          "$ref": "#/$defs/FeeDataStatus"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "holding_period_data_complete": {
+          "title": "Holding Period Data Complete",
+          "type": "boolean"
+        },
+        "holding_period_days": {
+          "maximum": 36500,
+          "minimum": 0,
+          "title": "Holding Period Days",
+          "type": "integer"
+        },
+        "loss_boundary_used": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Loss Boundary Used"
+        },
+        "recurring_contribution_active": {
+          "title": "Recurring Contribution Active",
+          "type": "boolean"
+        },
+        "risk_band": {
+          "$ref": "#/$defs/PositionRiskBand"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "unrealized_return_ratio": {
+          "anyOf": [
+            {
+              "maximum": 100.0,
+              "minimum": -1.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Unrealized Return Ratio"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "asset_id",
+        "asset_type",
+        "unrealized_return_ratio",
+        "loss_boundary_used",
+        "risk_band",
+        "recurring_contribution_active",
+        "holding_period_days",
+        "holding_period_data_complete",
+        "fee_data_status",
+        "generated_at"
+      ],
+      "title": "PortfolioAIRiskSummary",
+      "type": "object"
+    },
+    "PortfolioImportRequest": {
+      "additionalProperties": false,
+      "description": "Local-only input for a future CSV or OCR adapter.",
+      "properties": {
+        "content": {
+          "format": "binary",
+          "maxLength": 10000000,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "content_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "filename": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Filename",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_format": {
+          "enum": [
+            "CSV",
+            "OCR"
+          ],
+          "title": "Source Format",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_format",
+        "filename",
+        "content",
+        "content_sha256"
+      ],
+      "title": "PortfolioImportRequest",
+      "type": "object"
+    },
+    "PortfolioImportResult": {
+      "additionalProperties": false,
+      "properties": {
+        "assets": {
+          "items": {
+            "$ref": "#/$defs/Asset"
+          },
+          "maxItems": 10000,
+          "title": "Assets",
+          "type": "array"
+        },
+        "positions": {
+          "items": {
+            "$ref": "#/$defs/Position"
+          },
+          "maxItems": 10000,
+          "title": "Positions",
+          "type": "array"
+        },
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/InvestmentProfile"
+          },
+          "maxItems": 100,
+          "title": "Profiles",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "title": "PortfolioImportResult",
+      "type": "object"
+    },
     "Position": {
       "additionalProperties": false,
       "properties": {
@@ -1763,6 +2059,11 @@
         "current_value": {
           "$ref": "#/$defs/Money"
         },
+        "holding_period_data_complete": {
+          "default": false,
+          "title": "Holding Period Data Complete",
+          "type": "boolean"
+        },
         "latest_purchase_on": {
           "format": "date",
           "title": "Latest Purchase On",
@@ -1786,6 +2087,14 @@
           "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
           "title": "Profile Id",
           "type": "string"
+        },
+        "purchase_lots": {
+          "items": {
+            "$ref": "#/$defs/PurchaseLot"
+          },
+          "maxItems": 500,
+          "title": "Purchase Lots",
+          "type": "array"
         },
         "recurring_contribution": {
           "anyOf": [
@@ -1837,6 +2146,62 @@
       ],
       "title": "Position",
       "type": "object"
+    },
+    "PositionAnalysisSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_type": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "fee_policy": {
+          "$ref": "#/$defs/FundFeePolicy"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/Position"
+        },
+        "purpose": {
+          "const": "ANALYSIS",
+          "default": "ANALYSIS",
+          "title": "Purpose",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Snapshot Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "position",
+        "asset_type",
+        "fee_policy",
+        "generated_at"
+      ],
+      "title": "PositionAnalysisSnapshot",
+      "type": "object"
+    },
+    "PositionRiskBand": {
+      "enum": [
+        "WITHIN_PLAN",
+        "LOSS_WARNING",
+        "REANALYSIS_REQUIRED"
+      ],
+      "title": "PositionRiskBand",
+      "type": "string"
     },
     "PositionRiskSnapshot": {
       "additionalProperties": false,
@@ -1915,6 +2280,66 @@
         "snapshot_at"
       ],
       "title": "PositionRiskSnapshot",
+      "type": "object"
+    },
+    "PurchaseLot": {
+      "additionalProperties": false,
+      "properties": {
+        "confirmed_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confirmed On"
+        },
+        "cost_amount": {
+          "$ref": "#/$defs/Money"
+        },
+        "lot_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Lot Id",
+          "type": "string"
+        },
+        "purchased_on": {
+          "format": "date",
+          "title": "Purchased On",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "units": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,25}0*$)\\d{0,16}\\.\\d{0,8}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Units"
+        }
+      },
+      "required": [
+        "lot_id",
+        "purchased_on",
+        "units",
+        "cost_amount"
+      ],
+      "title": "PurchaseLot",
       "type": "object"
     },
     "RawDocument": {
@@ -2030,6 +2455,57 @@
         "discovered_at"
       ],
       "title": "RawDocumentControl",
+      "type": "object"
+    },
+    "RedemptionFeeTier": {
+      "additionalProperties": false,
+      "properties": {
+        "fee_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Fee Rate"
+        },
+        "maximum_holding_days": {
+          "anyOf": [
+            {
+              "maximum": 36500,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Holding Days"
+        },
+        "minimum_holding_days": {
+          "maximum": 36500,
+          "minimum": 0,
+          "title": "Minimum Holding Days",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum_holding_days",
+        "fee_rate"
+      ],
+      "title": "RedemptionFeeTier",
       "type": "object"
     },
     "RenderedReport": {
@@ -2918,6 +3394,9 @@
     "external_document_content": {
       "$ref": "#/$defs/ExternalDocumentContent"
     },
+    "fund_fee_policy": {
+      "$ref": "#/$defs/FundFeePolicy"
+    },
     "idempotency_key": {
       "$ref": "#/$defs/IdempotencyKey"
     },
@@ -2942,14 +3421,32 @@
     "notification_message": {
       "$ref": "#/$defs/NotificationMessage"
     },
+    "portfolio_ai_risk_summary": {
+      "$ref": "#/$defs/PortfolioAIRiskSummary"
+    },
+    "portfolio_import_request": {
+      "$ref": "#/$defs/PortfolioImportRequest"
+    },
+    "portfolio_import_result": {
+      "$ref": "#/$defs/PortfolioImportResult"
+    },
     "position": {
       "$ref": "#/$defs/Position"
+    },
+    "position_analysis_snapshot": {
+      "$ref": "#/$defs/PositionAnalysisSnapshot"
+    },
+    "purchase_lot": {
+      "$ref": "#/$defs/PurchaseLot"
     },
     "raw_document": {
       "$ref": "#/$defs/RawDocument"
     },
     "raw_document_control": {
       "$ref": "#/$defs/RawDocumentControl"
+    },
+    "redemption_fee_tier": {
+      "$ref": "#/$defs/RedemptionFeeTier"
     },
     "rendered_report": {
       "$ref": "#/$defs/RenderedReport"
@@ -3007,6 +3504,11 @@
     "investment_profile",
     "asset",
     "position",
+    "purchase_lot",
+    "redemption_fee_tier",
+    "fund_fee_policy",
+    "position_analysis_snapshot",
+    "portfolio_ai_risk_summary",
     "market_snapshot",
     "topic",
     "entity",
@@ -3042,7 +3544,9 @@
     "dispatch_receipt",
     "storage_write_request",
     "storage_write_result",
-    "storage_record"
+    "storage_record",
+    "portfolio_import_request",
+    "portfolio_import_result"
   ],
   "title": "DomainContractBundle",
   "type": "object",

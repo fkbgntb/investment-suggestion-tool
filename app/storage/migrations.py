@@ -7,6 +7,8 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 
+from app.storage.database import sqlite_database_path
+
 
 def build_alembic_config(database_url: str) -> Config:
     project_root = Path(__file__).resolve().parents[2]
@@ -17,6 +19,9 @@ def build_alembic_config(database_url: str) -> Config:
 
 
 def upgrade_database(database_url: str, revision: str = "head") -> None:
+    database_path = sqlite_database_path(database_url)
+    if database_path is not None:
+        database_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     command.upgrade(build_alembic_config(database_url), revision)
 
 

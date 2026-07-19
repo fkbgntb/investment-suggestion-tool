@@ -13,6 +13,8 @@ from app.domain.contracts import (
     DispatchReceipt,
     MarketDataRequest,
     NotificationMessage,
+    PortfolioImportRequest,
+    PortfolioImportResult,
     RenderedReport,
     ReportRenderRequest,
     SourceDiscoveryRequest,
@@ -39,7 +41,17 @@ from app.domain.evidence import (
     EvidenceScore,
 )
 from app.domain.jobs import JobRun
-from app.domain.portfolio import Asset, InvestmentProfile, MarketSnapshot, Position
+from app.domain.portfolio import (
+    Asset,
+    FundFeePolicy,
+    InvestmentProfile,
+    MarketSnapshot,
+    PortfolioAIRiskSummary,
+    Position,
+    PositionAnalysisSnapshot,
+    PurchaseLot,
+    RedemptionFeeTier,
+)
 from app.domain.state_machine import StateTransitionRecord
 from app.domain.taxonomy import Entity, Exposure, Source, Topic
 
@@ -53,6 +65,11 @@ class DomainContractBundle(DomainModel):
     investment_profile: InvestmentProfile
     asset: Asset
     position: Position
+    purchase_lot: PurchaseLot
+    redemption_fee_tier: RedemptionFeeTier
+    fund_fee_policy: FundFeePolicy
+    position_analysis_snapshot: PositionAnalysisSnapshot
+    portfolio_ai_risk_summary: PortfolioAIRiskSummary
     market_snapshot: MarketSnapshot
     topic: Topic
     entity: Entity
@@ -89,6 +106,8 @@ class DomainContractBundle(DomainModel):
     storage_write_request: StorageWriteRequest
     storage_write_result: StorageWriteResult
     storage_record: StorageRecord
+    portfolio_import_request: PortfolioImportRequest
+    portfolio_import_result: PortfolioImportResult
 
 
 def build_domain_schema() -> dict[str, object]:

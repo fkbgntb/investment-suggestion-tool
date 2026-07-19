@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     data_dir: Path = Path("./data")
     database_url: str = "sqlite:///./data/investment_tool.db"
+    portfolio_workspace_id: str = Field(
+        default="personal-demo",
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+    )
     raw_document_retention_days: int = Field(default=90, ge=1, le=3650)
     require_external_data_dir: bool = False
     allow_public_bind: bool = False
