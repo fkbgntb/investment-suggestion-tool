@@ -11,9 +11,9 @@
 - [x] 步骤 0：冻结第一版业务参数
 - [x] 步骤 1：工程骨架、安全配置、日志、健康检查和测试基线
 - [x] 步骤 2：版本化领域模型、模块接口、状态机和 JSON Schema
-- [ ] 步骤 3：数据库、迁移和审计结构
+- [x] 步骤 3：数据库、迁移、保留策略、审计和加密备份
 
-步骤 2 完成后，应用已经具备后续模块使用的数据契约，但仍不包含数据库、抓取器、AI 调用或投资报告页面。
+步骤 3 完成后，应用已经具备可迁移的本地数据库和安全备份能力，但仍不包含抓取器、AI 调用或投资报告页面。下一阶段会接入第一个信息源适配器。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 
@@ -45,6 +45,24 @@ Copy-Item .env.example .env
 ```powershell
 .\scripts\check.ps1 -Audit
 ```
+
+## 本地数据存储
+
+本机 `.env` 已配置为把运行数据放在 `E:\data`，不会把数据库、抓取原文或备份写入 C 盘。先执行数据库迁移：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\storage_admin.py migrate
+```
+
+数据库使用两个连续的 Alembic 版本，可以从旧版升级、回退后再升级。SQLite 只是第一版的本地实现；业务代码通过 SQLAlchemy 和仓储层访问数据，后续可以迁移到 PostgreSQL，原文目录也可以替换成云对象存储。
+
+需要备份时，只在本机 `.env` 中设置不少于 16 个字符的 `INVEST_BACKUP_PASSPHRASE`，然后运行：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\storage_admin.py backup
+```
+
+备份使用认证加密，默认位于 `E:\data\backups`。恢复会先校验口令、密文完整性和 SQLite 完整性，并且默认拒绝覆盖现有数据库。详细说明见 [docs/storage.md](docs/storage.md)。
 
 ## DeepSeek 密钥
 
