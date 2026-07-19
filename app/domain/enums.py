@@ -1,0 +1,98 @@
+"""Closed vocabularies shared by domain models and adapters."""
+
+from enum import StrEnum
+
+
+class AssetType(StrEnum):
+    ETF = "ETF"
+    ETF_LINK = "ETF_LINK"
+    INDEX_FUND = "INDEX_FUND"
+    UNKNOWN = "UNKNOWN"
+
+
+class EntityType(StrEnum):
+    COMPANY = "COMPANY"
+    COMMODITY = "COMMODITY"
+    INDEX = "INDEX"
+    PRODUCT = "PRODUCT"
+    TECHNOLOGY = "TECHNOLOGY"
+    REGION = "REGION"
+
+
+class ExposureKind(StrEnum):
+    DIRECT = "DIRECT"
+    UPSTREAM = "UPSTREAM"
+    DOWNSTREAM = "DOWNSTREAM"
+    INPUT_COST = "INPUT_COST"
+    DEMAND_DRIVER = "DEMAND_DRIVER"
+
+
+class SourceKind(StrEnum):
+    REGULATOR = "REGULATOR"
+    FUND_MANAGER = "FUND_MANAGER"
+    COMPANY_OFFICIAL = "COMPANY_OFFICIAL"
+    RESEARCH = "RESEARCH"
+    NEWS = "NEWS"
+    MARKET_DATA = "MARKET_DATA"
+    COMMUNITY = "COMMUNITY"
+
+
+class TrustTier(StrEnum):
+    PRIMARY = "PRIMARY"
+    PROFESSIONAL = "PROFESSIONAL"
+    SECONDARY = "SECONDARY"
+    SENTIMENT_ONLY = "SENTIMENT_ONLY"
+
+
+class DocumentState(StrEnum):
+    DISCOVERED = "DISCOVERED"
+    FETCHED = "FETCHED"
+    NORMALIZED = "NORMALIZED"
+    DEDUPLICATED = "DEDUPLICATED"
+    CLASSIFIED = "CLASSIFIED"
+    EXTRACTED = "EXTRACTED"
+    SCORED = "SCORED"
+    ANALYZED = "ANALYZED"
+    PUBLISHED = "PUBLISHED"
+    RETRYABLE_FAILED = "RETRYABLE_FAILED"
+    PERMANENT_FAILED = "PERMANENT_FAILED"
+    QUARANTINED = "QUARANTINED"
+
+
+class EvidenceDirection(StrEnum):
+    POSITIVE = "POSITIVE"
+    NEGATIVE = "NEGATIVE"
+    NEUTRAL = "NEUTRAL"
+    MIXED = "MIXED"
+    UNKNOWN = "UNKNOWN"
+
+
+class SuggestionLabel(StrEnum):
+    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+    OBSERVE = "OBSERVE"
+    HOLD = "HOLD"
+    SMALL_ADD = "SMALL_ADD"
+    PAUSE_ADDING = "PAUSE_ADDING"
+    REBALANCE = "REBALANCE"
+    REDUCE = "REDUCE"
+
+
+class JobStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
+    RETRYABLE_FAILED = "RETRYABLE_FAILED"
+    PERMANENT_FAILED = "PERMANENT_FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class TransitionOutcome(StrEnum):
+    APPLIED = "APPLIED"
+    NOOP = "NOOP"
+    REJECTED = "REJECTED"
+
+
+class ReportFormat(StrEnum):
+    MARKDOWN = "MARKDOWN"
+    HTML = "HTML"
+    PDF = "PDF"
