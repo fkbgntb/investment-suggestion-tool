@@ -10,6 +10,7 @@ from app.domain.contracts import (
     DispatchReceipt,
     MarketDataProvider,
     NotificationProvider,
+    PortfolioImportAdapter,
     ReportRenderer,
     SourceAdapter,
     SourceDiscoveryRequest,
@@ -89,6 +90,7 @@ def test_public_interfaces_have_no_transaction_execution_capability() -> None:
         NotificationProvider,
         TaskDispatcher,
         StorageProvider,
+        PortfolioImportAdapter,
     )
     forbidden = ("trade", "order", "redeem", "purchase", "transaction")
     method_names = {name.lower() for interface in interfaces for name in vars(interface)}

@@ -10,6 +10,18 @@ class AssetType(StrEnum):
     UNKNOWN = "UNKNOWN"
 
 
+class FeeDataStatus(StrEnum):
+    UNKNOWN = "UNKNOWN"
+    USER_PROVIDED = "USER_PROVIDED"
+    OFFICIAL_VERIFIED = "OFFICIAL_VERIFIED"
+
+
+class PositionRiskBand(StrEnum):
+    WITHIN_PLAN = "WITHIN_PLAN"
+    LOSS_WARNING = "LOSS_WARNING"
+    REANALYSIS_REQUIRED = "REANALYSIS_REQUIRED"
+
+
 class EntityType(StrEnum):
     COMPANY = "COMPANY"
     COMMODITY = "COMMODITY"

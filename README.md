@@ -12,8 +12,9 @@
 - [x] 步骤 1：工程骨架、安全配置、日志、健康检查和测试基线
 - [x] 步骤 2：版本化领域模型、模块接口、状态机和 JSON Schema
 - [x] 步骤 3：数据库、迁移、保留策略、审计和加密备份
+- [x] 步骤 4：投资档案、持仓 CRUD、费用字段和不可变分析快照
 
-步骤 3 完成后，应用已经具备可迁移的本地数据库和安全备份能力，但仍不包含抓取器、AI 调用或投资报告页面。下一阶段会接入第一个信息源适配器。
+步骤 4 完成后，应用可以在本机录入和维护模拟持仓，并为后续分析生成隐私化快照；仍不包含信息抓取、AI 调用或投资报告页面。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 
@@ -54,7 +55,7 @@ Copy-Item .env.example .env
 .\.venv\Scripts\python.exe scripts\storage_admin.py migrate
 ```
 
-数据库使用两个连续的 Alembic 版本，可以从旧版升级、回退后再升级。SQLite 只是第一版的本地实现；业务代码通过 SQLAlchemy 和仓储层访问数据，后续可以迁移到 PostgreSQL，原文目录也可以替换成云对象存储。
+数据库使用连续的 Alembic 版本，可以从旧版升级、回退后再升级。SQLite 只是第一版的本地实现；业务代码通过 SQLAlchemy 和仓储层访问数据，后续可以迁移到 PostgreSQL，原文目录也可以替换成云对象存储。
 
 需要备份时，只在本机 `.env` 中设置不少于 16 个字符的 `INVEST_BACKUP_PASSPHRASE`，然后运行：
 
@@ -63,6 +64,16 @@ Copy-Item .env.example .env
 ```
 
 备份使用认证加密，默认位于 `E:\data\backups`。恢复会先校验口令、密文完整性和 SQLite 完整性，并且默认拒绝覆盖现有数据库。详细说明见 [docs/storage.md](docs/storage.md)。
+
+## 模拟持仓
+
+首次写入已确认的 `007300` 示例档案：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\seed_demo_portfolio.py
+```
+
+脚本不会覆盖已经存在的档案。启动本地服务后，可在 API 文档的 `portfolio` 分组中录入、更新、删除模拟持仓，并生成分析快照。所有持仓接口只接受本机来源；服务一旦绑定公网地址，该组接口会直接禁用。详细说明见 [docs/portfolio.md](docs/portfolio.md)。
 
 ## DeepSeek 密钥
 

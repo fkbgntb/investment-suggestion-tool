@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.documents import RawDocument
 from app.domain.enums import TransitionOutcome
-from app.domain.portfolio import Asset, InvestmentProfile, Position
+from app.domain.portfolio import Asset, InvestmentProfile, Position, PositionAnalysisSnapshot
 from app.domain.state_machine import StateTransitionRecord
 from app.domain.taxonomy import Source
 from app.storage.models import (
@@ -24,6 +24,7 @@ from app.storage.models import (
     CrawlRunRow,
     InvestmentProfileRow,
     PositionRow,
+    PositionSnapshotRow,
     RawDocumentRow,
     SourceRow,
     WorkspaceRow,
@@ -142,6 +143,48 @@ class PortfolioRepository:
         self.session.flush()
         return row
 
+    def get_profile(self, profile_id: str) -> InvestmentProfile | None:
+        row = self.session.scalar(
+            select(InvestmentProfileRow).where(
+                InvestmentProfileRow.workspace_id == self.workspace_id,
+                InvestmentProfileRow.profile_id == profile_id,
+            )
+        )
+        return InvestmentProfile.model_validate(row.payload) if row is not None else None
+
+    def list_profiles(self) -> tuple[InvestmentProfile, ...]:
+        rows = self.session.scalars(
+            select(InvestmentProfileRow)
+            .where(InvestmentProfileRow.workspace_id == self.workspace_id)
+            .order_by(InvestmentProfileRow.created_at)
+        )
+        return tuple(InvestmentProfile.model_validate(row.payload) for row in rows)
+
+    def update_profile(self, profile: InvestmentProfile) -> bool:
+        statement = (
+            update(InvestmentProfileRow)
+            .where(
+                InvestmentProfileRow.workspace_id == self.workspace_id,
+                InvestmentProfileRow.profile_id == profile.profile_id,
+            )
+            .values(
+                name=profile.name,
+                schema_version=profile.schema_version,
+                payload=profile.model_dump(mode="json"),
+                updated_at=utc_now(),
+            )
+        )
+        return self.session.execute(statement).rowcount == 1
+
+    def delete_profile(self, profile_id: str) -> bool:
+        result = self.session.execute(
+            delete(InvestmentProfileRow).where(
+                InvestmentProfileRow.workspace_id == self.workspace_id,
+                InvestmentProfileRow.profile_id == profile_id,
+            )
+        )
+        return result.rowcount == 1
+
     def add_asset(self, asset: Asset) -> AssetRow:
         row = AssetRow(
             asset_id=asset.asset_id,
@@ -154,6 +197,40 @@ class PortfolioRepository:
         self.session.add(row)
         self.session.flush()
         return row
+
+    def get_asset(self, asset_id: str) -> Asset | None:
+        row = self.session.scalar(
+            select(AssetRow).where(
+                AssetRow.workspace_id == self.workspace_id,
+                AssetRow.asset_id == asset_id,
+            )
+        )
+        return Asset.model_validate(row.payload) if row is not None else None
+
+    def list_assets(self) -> tuple[Asset, ...]:
+        rows = self.session.scalars(
+            select(AssetRow)
+            .where(AssetRow.workspace_id == self.workspace_id)
+            .order_by(AssetRow.fund_code)
+        )
+        return tuple(Asset.model_validate(row.payload) for row in rows)
+
+    def update_asset(self, asset: Asset) -> bool:
+        statement = (
+            update(AssetRow)
+            .where(
+                AssetRow.workspace_id == self.workspace_id,
+                AssetRow.asset_id == asset.asset_id,
+            )
+            .values(
+                fund_code=asset.fund_code,
+                asset_type=asset.asset_type.value,
+                schema_version=asset.schema_version,
+                payload=asset.model_dump(mode="json"),
+                updated_at=utc_now(),
+            )
+        )
+        return self.session.execute(statement).rowcount == 1
 
     def add_position(self, position: Position) -> PositionRow:
         row = PositionRow(
@@ -168,6 +245,74 @@ class PortfolioRepository:
         self.session.add(row)
         self.session.flush()
         return row
+
+    def get_position(self, position_id: str) -> Position | None:
+        row = self.session.scalar(
+            select(PositionRow).where(
+                PositionRow.workspace_id == self.workspace_id,
+                PositionRow.position_id == position_id,
+            )
+        )
+        return Position.model_validate(row.payload) if row is not None else None
+
+    def list_positions(self) -> tuple[Position, ...]:
+        rows = self.session.scalars(
+            select(PositionRow)
+            .where(PositionRow.workspace_id == self.workspace_id)
+            .order_by(PositionRow.snapshot_at.desc())
+        )
+        return tuple(Position.model_validate(row.payload) for row in rows)
+
+    def update_position(self, position: Position) -> bool:
+        statement = (
+            update(PositionRow)
+            .where(
+                PositionRow.workspace_id == self.workspace_id,
+                PositionRow.position_id == position.position_id,
+            )
+            .values(
+                profile_id=position.profile_id,
+                asset_id=position.asset_id,
+                snapshot_at=position.snapshot_at,
+                schema_version=position.schema_version,
+                payload=position.model_dump(mode="json"),
+                updated_at=utc_now(),
+            )
+        )
+        return self.session.execute(statement).rowcount == 1
+
+    def delete_position(self, position_id: str) -> bool:
+        result = self.session.execute(
+            delete(PositionRow).where(
+                PositionRow.workspace_id == self.workspace_id,
+                PositionRow.position_id == position_id,
+            )
+        )
+        return result.rowcount == 1
+
+    def add_position_snapshot(self, snapshot: PositionAnalysisSnapshot) -> PositionSnapshotRow:
+        row = PositionSnapshotRow(
+            snapshot_id=snapshot.snapshot_id,
+            workspace_id=self.workspace_id,
+            position_id=snapshot.position.position_id,
+            asset_id=snapshot.position.asset_id,
+            purpose=snapshot.purpose,
+            schema_version=snapshot.schema_version,
+            payload=snapshot.model_dump(mode="json"),
+            generated_at=snapshot.generated_at,
+        )
+        self.session.add(row)
+        self.session.flush()
+        return row
+
+    def get_position_snapshot(self, snapshot_id: str) -> PositionAnalysisSnapshot | None:
+        row = self.session.scalar(
+            select(PositionSnapshotRow).where(
+                PositionSnapshotRow.workspace_id == self.workspace_id,
+                PositionSnapshotRow.snapshot_id == snapshot_id,
+            )
+        )
+        return PositionAnalysisSnapshot.model_validate(row.payload) if row is not None else None
 
 
 class SourceRepository:
