@@ -28,8 +28,7 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers --strict-config"
-cache_dir = ".cache/pytest"
+addopts = "--strict-markers --strict-config -p no:cacheprovider"
 
 [tool.coverage.run]
 branch = true

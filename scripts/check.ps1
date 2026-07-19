@@ -33,6 +33,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Ruff format check failed with exit code $LASTEXITCODE"
 }
 Invoke-Python scripts/check_secrets.py
+Invoke-Python scripts/export_schemas.py --check
 Invoke-Python -m pytest --cov=app --cov-report=term-missing
 
 if ($Audit) {

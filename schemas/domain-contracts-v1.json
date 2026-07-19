@@ -1,0 +1,3050 @@
+{
+  "$defs": {
+    "AnalysisRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/DecisionContext"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "context",
+        "prompt_version"
+      ],
+      "title": "AnalysisRequest",
+      "type": "object"
+    },
+    "AnalysisResult": {
+      "additionalProperties": false,
+      "properties": {
+        "analysis_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "analyzed_at": {
+          "format": "date-time",
+          "title": "Analyzed At",
+          "type": "string"
+        },
+        "bearish_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Bearish Factors",
+          "type": "array"
+        },
+        "bullish_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Bullish Factors",
+          "type": "array"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Confidence"
+        },
+        "context_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Context Id",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "model_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Model Version",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "uncertainties": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Uncertainties",
+          "type": "array"
+        }
+      },
+      "required": [
+        "analysis_id",
+        "context_id",
+        "confidence",
+        "pipeline_version",
+        "model_version",
+        "prompt_version",
+        "analyzed_at"
+      ],
+      "title": "AnalysisResult",
+      "type": "object"
+    },
+    "Asset": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "asset_type": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "currency": {
+          "default": "CNY",
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "fund_code": {
+          "maxLength": 32,
+          "minLength": 6,
+          "pattern": "^[A-Za-z0-9.:-]+$",
+          "title": "Fund Code",
+          "type": "string"
+        },
+        "market": {
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Market",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 240,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "tracking_asset_code": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tracking Asset Code"
+        }
+      },
+      "required": [
+        "asset_id",
+        "fund_code",
+        "name",
+        "asset_type",
+        "market"
+      ],
+      "title": "Asset",
+      "type": "object"
+    },
+    "AssetType": {
+      "enum": [
+        "ETF",
+        "ETF_LINK",
+        "INDEX_FUND",
+        "UNKNOWN"
+      ],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "DecisionContext": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "context_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Context Id",
+          "type": "string"
+        },
+        "data_as_of": {
+          "format": "date-time",
+          "title": "Data As Of",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 1000,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "pipeline_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/$defs/PositionRiskSnapshot"
+        },
+        "risk_constraints": {
+          "$ref": "#/$defs/RiskConstraints"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scores": {
+          "items": {
+            "$ref": "#/$defs/EvidenceScore"
+          },
+          "maxItems": 1000,
+          "title": "Scores",
+          "type": "array"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Topic Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "context_id",
+        "asset_id",
+        "topic_ids",
+        "risk_constraints",
+        "position",
+        "data_as_of",
+        "pipeline_version"
+      ],
+      "title": "DecisionContext",
+      "type": "object"
+    },
+    "DecisionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "advisory_only": {
+          "const": true,
+          "default": true,
+          "title": "Advisory Only",
+          "type": "boolean"
+        },
+        "context_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Context Id",
+          "type": "string"
+        },
+        "decided_at": {
+          "format": "date-time",
+          "title": "Decided At",
+          "type": "string"
+        },
+        "decision_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "disclaimer": {
+          "const": "仅供个人决策参考；系统不执行交易，所有实际操作由用户独立判断和完成。",
+          "default": "仅供个人决策参考；系统不执行交易，所有实际操作由用户独立判断和完成。",
+          "title": "Disclaimer",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "label": {
+          "$ref": "#/$defs/SuggestionLabel"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Reasons",
+          "type": "array"
+        },
+        "reference_amount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoneyRange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rule_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "strength": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Strength"
+        }
+      },
+      "required": [
+        "decision_id",
+        "context_id",
+        "label",
+        "strength",
+        "reasons",
+        "rule_version",
+        "decided_at"
+      ],
+      "title": "DecisionResult",
+      "type": "object"
+    },
+    "DeliveryReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "title": "Accepted",
+          "type": "boolean"
+        },
+        "accepted_at": {
+          "format": "date-time",
+          "title": "Accepted At",
+          "type": "string"
+        },
+        "notification_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Notification Id",
+          "type": "string"
+        },
+        "provider_message_id": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Message Id"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "notification_id",
+        "accepted",
+        "accepted_at"
+      ],
+      "title": "DeliveryReceipt",
+      "type": "object"
+    },
+    "DiscoveredDocument": {
+      "additionalProperties": false,
+      "properties": {
+        "discovered_at": {
+          "format": "date-time",
+          "title": "Discovered At",
+          "type": "string"
+        },
+        "external_reference": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Reference"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "source_url",
+        "discovered_at"
+      ],
+      "title": "DiscoveredDocument",
+      "type": "object"
+    },
+    "DispatchReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "title": "Accepted",
+          "type": "boolean"
+        },
+        "dispatch_reference": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dispatch Reference"
+        },
+        "duplicate": {
+          "title": "Duplicate",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "task_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "accepted",
+        "duplicate"
+      ],
+      "title": "DispatchReceipt",
+      "type": "object"
+    },
+    "DocumentState": {
+      "enum": [
+        "DISCOVERED",
+        "FETCHED",
+        "NORMALIZED",
+        "DEDUPLICATED",
+        "CLASSIFIED",
+        "EXTRACTED",
+        "SCORED",
+        "ANALYZED",
+        "PUBLISHED",
+        "RETRYABLE_FAILED",
+        "PERMANENT_FAILED",
+        "QUARANTINED"
+      ],
+      "title": "DocumentState",
+      "type": "string"
+    },
+    "Entity": {
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Aliases",
+          "type": "array"
+        },
+        "entity_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "entity_type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity_id",
+        "name",
+        "entity_type"
+      ],
+      "title": "Entity",
+      "type": "object"
+    },
+    "EntityType": {
+      "enum": [
+        "COMPANY",
+        "COMMODITY",
+        "INDEX",
+        "PRODUCT",
+        "TECHNOLOGY",
+        "REGION"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "EventCluster": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Canonical Document Id",
+          "type": "string"
+        },
+        "cluster_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Cluster Id",
+          "type": "string"
+        },
+        "document_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "title": "Document Ids",
+          "type": "array"
+        },
+        "event_key": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Event Key",
+          "type": "string"
+        },
+        "first_seen_at": {
+          "format": "date-time",
+          "title": "First Seen At",
+          "type": "string"
+        },
+        "last_seen_at": {
+          "format": "date-time",
+          "title": "Last Seen At",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Topic Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cluster_id",
+        "topic_ids",
+        "document_ids",
+        "canonical_document_id",
+        "event_key",
+        "first_seen_at",
+        "last_seen_at"
+      ],
+      "title": "EventCluster",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "cluster_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cluster Id"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "draft": {
+          "$ref": "#/$defs/EvidenceDraft"
+        },
+        "evidence_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "extracted_at": {
+          "format": "date-time",
+          "title": "Extracted At",
+          "type": "string"
+        },
+        "extractor_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Extractor Name",
+          "type": "string"
+        },
+        "model_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Model Version",
+          "type": "string"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "document_id",
+        "draft",
+        "extracted_at",
+        "extractor_name",
+        "model_version",
+        "prompt_version"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "EvidenceDirection": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "NEUTRAL",
+        "MIXED",
+        "UNKNOWN"
+      ],
+      "title": "EvidenceDirection",
+      "type": "string"
+    },
+    "EvidenceDraft": {
+      "additionalProperties": false,
+      "description": "AI-produced claim data with no persistence or control instructions.",
+      "properties": {
+        "claim": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Claim",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Confidence"
+        },
+        "direction": {
+          "$ref": "#/$defs/EvidenceDirection"
+        },
+        "entity_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Entity Ids",
+          "type": "array"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Topic Ids",
+          "type": "array"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertainty"
+        }
+      },
+      "required": [
+        "claim",
+        "direction",
+        "topic_ids",
+        "confidence"
+      ],
+      "title": "EvidenceDraft",
+      "type": "object"
+    },
+    "EvidenceExtractionRequest": {
+      "additionalProperties": false,
+      "description": "Minimal AI input: normalized content, never database control or portfolio details.",
+      "properties": {
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "language": {
+          "maxLength": 16,
+          "minLength": 2,
+          "pattern": "^[A-Za-z-]+$",
+          "title": "Language",
+          "type": "string"
+        },
+        "normalized_body": {
+          "maxLength": 200000,
+          "minLength": 1,
+          "title": "Normalized Body",
+          "type": "string"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Topic Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "document_id",
+        "title",
+        "normalized_body",
+        "language",
+        "topic_ids",
+        "prompt_version"
+      ],
+      "title": "EvidenceExtractionRequest",
+      "type": "object"
+    },
+    "EvidenceExtractionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "completed_at": {
+          "format": "date-time",
+          "title": "Completed At",
+          "type": "string"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceDraft"
+          },
+          "maxItems": 200,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "model_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Model Version",
+          "type": "string"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "provider_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Provider Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Unknowns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "document_id",
+        "provider_name",
+        "model_version",
+        "prompt_version",
+        "completed_at"
+      ],
+      "title": "EvidenceExtractionResult",
+      "type": "object"
+    },
+    "EvidenceScore": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "extraction_confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Extraction Confidence"
+        },
+        "independence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Independence"
+        },
+        "recency": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Recency"
+        },
+        "relevance": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Relevance"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scored_at": {
+          "format": "date-time",
+          "title": "Scored At",
+          "type": "string"
+        },
+        "scoring_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Scoring Version",
+          "type": "string"
+        },
+        "source_quality": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Source Quality"
+        },
+        "total": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Total"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "source_quality",
+        "independence",
+        "recency",
+        "relevance",
+        "extraction_confidence",
+        "total",
+        "scoring_version",
+        "scored_at"
+      ],
+      "title": "EvidenceScore",
+      "type": "object"
+    },
+    "Exposure": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "config_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "entity_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity Id"
+        },
+        "exposure_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Exposure Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ExposureKind"
+        },
+        "rationale": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "topic_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Topic Id",
+          "type": "string"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Weight"
+        }
+      },
+      "required": [
+        "exposure_id",
+        "asset_id",
+        "topic_id",
+        "kind",
+        "weight",
+        "rationale",
+        "config_version"
+      ],
+      "title": "Exposure",
+      "type": "object"
+    },
+    "ExposureKind": {
+      "enum": [
+        "DIRECT",
+        "UPSTREAM",
+        "DOWNSTREAM",
+        "INPUT_COST",
+        "DEMAND_DRIVER"
+      ],
+      "title": "ExposureKind",
+      "type": "string"
+    },
+    "ExternalDocumentContent": {
+      "additionalProperties": false,
+      "description": "Untrusted source-controlled fields; never interpreted as system instructions.",
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "body": {
+          "maxLength": 2000000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "language": {
+          "maxLength": 16,
+          "minLength": 2,
+          "pattern": "^[A-Za-z-]+$",
+          "title": "Language",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_url",
+        "title",
+        "body",
+        "language"
+      ],
+      "title": "ExternalDocumentContent",
+      "type": "object"
+    },
+    "IdempotencyKey": {
+      "additionalProperties": false,
+      "description": "Stable key and payload digest required for mutating application operations.",
+      "properties": {
+        "key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Key",
+          "type": "string"
+        },
+        "payload_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Payload Sha256",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "key",
+        "payload_sha256"
+      ],
+      "title": "IdempotencyKey",
+      "type": "object"
+    },
+    "InvestmentProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "accepts_long_term_volatility": {
+          "title": "Accepts Long Term Volatility",
+          "type": "boolean"
+        },
+        "advisory_only": {
+          "default": true,
+          "title": "Advisory Only",
+          "type": "boolean"
+        },
+        "base_currency": {
+          "default": "CNY",
+          "pattern": "^[A-Z]{3}$",
+          "title": "Base Currency",
+          "type": "string"
+        },
+        "fund_loss_warning": {
+          "$ref": "#/$defs/Money"
+        },
+        "fund_reanalysis_threshold": {
+          "$ref": "#/$defs/Money"
+        },
+        "maximum_portfolio_loss": {
+          "$ref": "#/$defs/Money"
+        },
+        "monthly_contribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Money"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "single_add_range": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoneyRange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "profile_id",
+        "name",
+        "maximum_portfolio_loss",
+        "fund_loss_warning",
+        "fund_reanalysis_threshold",
+        "accepts_long_term_volatility"
+      ],
+      "title": "InvestmentProfile",
+      "type": "object"
+    },
+    "JobRun": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "idempotency": {
+          "$ref": "#/$defs/IdempotencyKey"
+        },
+        "job_run_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Job Run Id",
+          "type": "string"
+        },
+        "job_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Job Type",
+          "type": "string"
+        },
+        "scheduled_at": {
+          "format": "date-time",
+          "title": "Scheduled At",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "status": {
+          "$ref": "#/$defs/JobStatus"
+        }
+      },
+      "required": [
+        "job_run_id",
+        "job_type",
+        "status",
+        "idempotency",
+        "scheduled_at"
+      ],
+      "title": "JobRun",
+      "type": "object"
+    },
+    "JobStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "SUCCEEDED",
+        "RETRYABLE_FAILED",
+        "PERMANENT_FAILED",
+        "CANCELLED"
+      ],
+      "title": "JobStatus",
+      "type": "string"
+    },
+    "JsonValue": {},
+    "MarketDataRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "asset": {
+          "$ref": "#/$defs/Asset"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset",
+        "as_of"
+      ],
+      "title": "MarketDataRequest",
+      "type": "object"
+    },
+    "MarketSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "daily_change_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": -1.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Daily Change Ratio"
+        },
+        "is_stale": {
+          "default": false,
+          "title": "Is Stale",
+          "type": "boolean"
+        },
+        "net_asset_value": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Net Asset Value"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id",
+        "as_of",
+        "net_asset_value",
+        "source_id"
+      ],
+      "title": "MarketSnapshot",
+      "type": "object"
+    },
+    "Money": {
+      "additionalProperties": false,
+      "description": "A non-negative monetary value with an explicit currency.",
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,14}|(?=[\\d.]{1,19}0*$)\\d{0,14}\\.\\d{0,4}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Amount"
+        },
+        "currency": {
+          "default": "CNY",
+          "maxLength": 3,
+          "minLength": 3,
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "title": "Money",
+      "type": "object"
+    },
+    "MoneyRange": {
+      "additionalProperties": false,
+      "description": "A non-binding amount range used only in advisory output.",
+      "properties": {
+        "maximum": {
+          "$ref": "#/$defs/Money"
+        },
+        "minimum": {
+          "$ref": "#/$defs/Money"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "minimum",
+        "maximum"
+      ],
+      "title": "MoneyRange",
+      "type": "object"
+    },
+    "NotificationMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "maxLength": 20000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "notification_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Notification Id",
+          "type": "string"
+        },
+        "report_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Id"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "notification_id",
+        "subject",
+        "body"
+      ],
+      "title": "NotificationMessage",
+      "type": "object"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "average_cost_per_unit": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Average Cost Per Unit"
+        },
+        "cost_basis": {
+          "$ref": "#/$defs/Money"
+        },
+        "current_value": {
+          "$ref": "#/$defs/Money"
+        },
+        "latest_purchase_on": {
+          "format": "date",
+          "title": "Latest Purchase On",
+          "type": "string"
+        },
+        "opened_on": {
+          "format": "date",
+          "title": "Opened On",
+          "type": "string"
+        },
+        "position_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Position Id",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "recurring_contribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Money"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "snapshot_at": {
+          "format": "date-time",
+          "title": "Snapshot At",
+          "type": "string"
+        },
+        "units": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,25}0*$)\\d{0,16}\\.\\d{0,8}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Units"
+        }
+      },
+      "required": [
+        "position_id",
+        "profile_id",
+        "asset_id",
+        "units",
+        "cost_basis",
+        "current_value",
+        "average_cost_per_unit",
+        "opened_on",
+        "latest_purchase_on",
+        "snapshot_at"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "PositionRiskSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "loss_boundary_used": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Loss Boundary Used"
+        },
+        "portfolio_weight": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Portfolio Weight"
+        },
+        "recurring_contribution_active": {
+          "title": "Recurring Contribution Active",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "snapshot_at": {
+          "format": "date-time",
+          "title": "Snapshot At",
+          "type": "string"
+        },
+        "unrealized_return_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": -1.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Unrealized Return Ratio"
+        }
+      },
+      "required": [
+        "asset_id",
+        "portfolio_weight",
+        "unrealized_return_ratio",
+        "loss_boundary_used",
+        "recurring_contribution_active",
+        "snapshot_at"
+      ],
+      "title": "PositionRiskSnapshot",
+      "type": "object"
+    },
+    "RawDocument": {
+      "additionalProperties": false,
+      "description": "Aggregate whose shape makes the trust boundary explicit.",
+      "properties": {
+        "control": {
+          "$ref": "#/$defs/RawDocumentControl"
+        },
+        "external": {
+          "$ref": "#/$defs/ExternalDocumentContent"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "external",
+        "control"
+      ],
+      "title": "RawDocument",
+      "type": "object"
+    },
+    "RawDocumentControl": {
+      "additionalProperties": false,
+      "description": "System-owned fields kept separate from untrusted external content.",
+      "properties": {
+        "content_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "discovered_at": {
+          "format": "date-time",
+          "title": "Discovered At",
+          "type": "string"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "failure_count": {
+          "default": 0,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Failure Count",
+          "type": "integer"
+        },
+        "fetched_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fetched At"
+        },
+        "idempotency": {
+          "$ref": "#/$defs/IdempotencyKey"
+        },
+        "last_error_code": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Error Code"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/DocumentState"
+        },
+        "state_version": {
+          "minimum": 0,
+          "title": "State Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "document_id",
+        "source_id",
+        "state",
+        "state_version",
+        "content_sha256",
+        "idempotency",
+        "discovered_at"
+      ],
+      "title": "RawDocumentControl",
+      "type": "object"
+    },
+    "RenderedReport": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "format": "binary",
+          "maxLength": 10000000,
+          "minLength": 1,
+          "title": "Content",
+          "type": "string"
+        },
+        "content_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 100,
+          "minLength": 3,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "output_format": {
+          "$ref": "#/$defs/ReportFormat"
+        },
+        "report_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "output_format",
+        "media_type",
+        "content",
+        "content_sha256"
+      ],
+      "title": "RenderedReport",
+      "type": "object"
+    },
+    "Report": {
+      "additionalProperties": false,
+      "properties": {
+        "advisory_only": {
+          "const": true,
+          "default": true,
+          "title": "Advisory Only",
+          "type": "boolean"
+        },
+        "analysis": {
+          "$ref": "#/$defs/AnalysisResult"
+        },
+        "asset_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/DecisionResult"
+        },
+        "disclaimer": {
+          "const": "仅供个人决策参考；系统不执行交易，所有实际操作由用户独立判断和完成。",
+          "default": "仅供个人决策参考；系统不执行交易，所有实际操作由用户独立判断和完成。",
+          "title": "Disclaimer",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "report_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Source Ids",
+          "type": "array"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Topic Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "report_id",
+        "asset_id",
+        "topic_ids",
+        "decision",
+        "analysis",
+        "generated_at",
+        "pipeline_version",
+        "rule_version",
+        "prompt_version"
+      ],
+      "title": "Report",
+      "type": "object"
+    },
+    "ReportFormat": {
+      "enum": [
+        "MARKDOWN",
+        "HTML",
+        "PDF"
+      ],
+      "title": "ReportFormat",
+      "type": "string"
+    },
+    "ReportRenderRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "output_format": {
+          "$ref": "#/$defs/ReportFormat"
+        },
+        "report": {
+          "$ref": "#/$defs/Report"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report",
+        "output_format"
+      ],
+      "title": "ReportRenderRequest",
+      "type": "object"
+    },
+    "RiskConstraints": {
+      "additionalProperties": false,
+      "properties": {
+        "long_horizon": {
+          "title": "Long Horizon",
+          "type": "boolean"
+        },
+        "maximum_position_loss_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Maximum Position Loss Ratio"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "single_add_reference_range": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoneyRange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "maximum_position_loss_ratio",
+        "long_horizon"
+      ],
+      "title": "RiskConstraints",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Adapter Name",
+          "type": "string"
+        },
+        "base_url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Base Url",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/SourceKind"
+        },
+        "languages": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Languages",
+          "type": "array"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "regions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Regions",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "trust_tier": {
+          "$ref": "#/$defs/TrustTier"
+        }
+      },
+      "required": [
+        "source_id",
+        "name",
+        "kind",
+        "trust_tier",
+        "base_url",
+        "regions",
+        "languages",
+        "adapter_name"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "SourceDiscoveryRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cursor"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "since": {
+          "format": "date-time",
+          "title": "Since",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Topic Ids",
+          "type": "array"
+        },
+        "until": {
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "topic_ids",
+        "since",
+        "until"
+      ],
+      "title": "SourceDiscoveryRequest",
+      "type": "object"
+    },
+    "SourceDiscoveryResult": {
+      "additionalProperties": false,
+      "properties": {
+        "documents": {
+          "items": {
+            "$ref": "#/$defs/DiscoveredDocument"
+          },
+          "maxItems": 10000,
+          "title": "Documents",
+          "type": "array"
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "SourceDiscoveryResult",
+      "type": "object"
+    },
+    "SourceFetchRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "idempotency": {
+          "$ref": "#/$defs/IdempotencyKey"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Source Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "source_url",
+        "idempotency"
+      ],
+      "title": "SourceFetchRequest",
+      "type": "object"
+    },
+    "SourceFetchResult": {
+      "additionalProperties": false,
+      "description": "Adapter output deliberately excludes system-owned state and persistence fields.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/ExternalDocumentContent"
+        },
+        "content_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "fetched_at": {
+          "format": "date-time",
+          "title": "Fetched At",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "content",
+        "content_sha256",
+        "fetched_at"
+      ],
+      "title": "SourceFetchResult",
+      "type": "object"
+    },
+    "SourceKind": {
+      "enum": [
+        "REGULATOR",
+        "FUND_MANAGER",
+        "COMPANY_OFFICIAL",
+        "RESEARCH",
+        "NEWS",
+        "MARKET_DATA",
+        "COMMUNITY"
+      ],
+      "title": "SourceKind",
+      "type": "string"
+    },
+    "StateTransitionRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "from_state": {
+          "$ref": "#/$defs/DocumentState"
+        },
+        "next_version": {
+          "minimum": 0,
+          "title": "Next Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/TransitionOutcome"
+        },
+        "previous_version": {
+          "minimum": 0,
+          "title": "Previous Version",
+          "type": "integer"
+        },
+        "reason": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "requested_state": {
+          "$ref": "#/$defs/DocumentState"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "transition_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Transition Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transition_id",
+        "document_id",
+        "from_state",
+        "requested_state",
+        "outcome",
+        "previous_version",
+        "next_version",
+        "occurred_at",
+        "reason"
+      ],
+      "title": "StateTransitionRecord",
+      "type": "object"
+    },
+    "StorageRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "payload": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Payload",
+          "type": "object"
+        },
+        "record_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "record_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Record Type",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_type",
+        "record_id",
+        "payload"
+      ],
+      "title": "StorageRecord",
+      "type": "object"
+    },
+    "StorageWriteRequest": {
+      "additionalProperties": false,
+      "description": "Typed envelope; storage interprets data, never executable commands.",
+      "properties": {
+        "idempotency": {
+          "$ref": "#/$defs/IdempotencyKey"
+        },
+        "payload": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Payload",
+          "type": "object"
+        },
+        "record_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "record_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Record Type",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_type",
+        "record_id",
+        "payload",
+        "idempotency"
+      ],
+      "title": "StorageWriteRequest",
+      "type": "object"
+    },
+    "StorageWriteResult": {
+      "additionalProperties": false,
+      "properties": {
+        "created": {
+          "title": "Created",
+          "type": "boolean"
+        },
+        "duplicate": {
+          "title": "Duplicate",
+          "type": "boolean"
+        },
+        "record_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "record_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Record Type",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_type",
+        "record_id",
+        "created",
+        "duplicate"
+      ],
+      "title": "StorageWriteResult",
+      "type": "object"
+    },
+    "SuggestionLabel": {
+      "enum": [
+        "INSUFFICIENT_DATA",
+        "OBSERVE",
+        "HOLD",
+        "SMALL_ADD",
+        "PAUSE_ADDING",
+        "REBALANCE",
+        "REDUCE"
+      ],
+      "title": "SuggestionLabel",
+      "type": "string"
+    },
+    "TaskRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "idempotency": {
+          "$ref": "#/$defs/IdempotencyKey"
+        },
+        "not_before": {
+          "format": "date-time",
+          "title": "Not Before",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Payload",
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "task_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "task_type": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Task Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "task_type",
+        "idempotency",
+        "not_before"
+      ],
+      "title": "TaskRequest",
+      "type": "object"
+    },
+    "Topic": {
+      "additionalProperties": false,
+      "properties": {
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Aliases",
+          "type": "array"
+        },
+        "config_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 500,
+          "title": "Keywords",
+          "type": "array"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "topic_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Topic Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "topic_id",
+        "name",
+        "config_version"
+      ],
+      "title": "Topic",
+      "type": "object"
+    },
+    "TransitionOutcome": {
+      "enum": [
+        "APPLIED",
+        "NOOP",
+        "REJECTED"
+      ],
+      "title": "TransitionOutcome",
+      "type": "string"
+    },
+    "TrustTier": {
+      "enum": [
+        "PRIMARY",
+        "PROFESSIONAL",
+        "SECONDARY",
+        "SENTIMENT_ONLY"
+      ],
+      "title": "TrustTier",
+      "type": "string"
+    }
+  },
+  "$id": "https://investment-suggestion-tool.local/schemas/domain-contracts-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Schema-only catalog whose definitions are the supported public contracts.",
+  "properties": {
+    "analysis_request": {
+      "$ref": "#/$defs/AnalysisRequest"
+    },
+    "analysis_result": {
+      "$ref": "#/$defs/AnalysisResult"
+    },
+    "asset": {
+      "$ref": "#/$defs/Asset"
+    },
+    "decision_context": {
+      "$ref": "#/$defs/DecisionContext"
+    },
+    "decision_result": {
+      "$ref": "#/$defs/DecisionResult"
+    },
+    "delivery_receipt": {
+      "$ref": "#/$defs/DeliveryReceipt"
+    },
+    "discovered_document": {
+      "$ref": "#/$defs/DiscoveredDocument"
+    },
+    "dispatch_receipt": {
+      "$ref": "#/$defs/DispatchReceipt"
+    },
+    "entity": {
+      "$ref": "#/$defs/Entity"
+    },
+    "event_cluster": {
+      "$ref": "#/$defs/EventCluster"
+    },
+    "evidence": {
+      "$ref": "#/$defs/Evidence"
+    },
+    "evidence_draft": {
+      "$ref": "#/$defs/EvidenceDraft"
+    },
+    "evidence_extraction_request": {
+      "$ref": "#/$defs/EvidenceExtractionRequest"
+    },
+    "evidence_extraction_result": {
+      "$ref": "#/$defs/EvidenceExtractionResult"
+    },
+    "evidence_score": {
+      "$ref": "#/$defs/EvidenceScore"
+    },
+    "exposure": {
+      "$ref": "#/$defs/Exposure"
+    },
+    "external_document_content": {
+      "$ref": "#/$defs/ExternalDocumentContent"
+    },
+    "idempotency_key": {
+      "$ref": "#/$defs/IdempotencyKey"
+    },
+    "investment_profile": {
+      "$ref": "#/$defs/InvestmentProfile"
+    },
+    "job_run": {
+      "$ref": "#/$defs/JobRun"
+    },
+    "market_data_request": {
+      "$ref": "#/$defs/MarketDataRequest"
+    },
+    "market_snapshot": {
+      "$ref": "#/$defs/MarketSnapshot"
+    },
+    "money": {
+      "$ref": "#/$defs/Money"
+    },
+    "money_range": {
+      "$ref": "#/$defs/MoneyRange"
+    },
+    "notification_message": {
+      "$ref": "#/$defs/NotificationMessage"
+    },
+    "position": {
+      "$ref": "#/$defs/Position"
+    },
+    "raw_document": {
+      "$ref": "#/$defs/RawDocument"
+    },
+    "raw_document_control": {
+      "$ref": "#/$defs/RawDocumentControl"
+    },
+    "rendered_report": {
+      "$ref": "#/$defs/RenderedReport"
+    },
+    "report": {
+      "$ref": "#/$defs/Report"
+    },
+    "report_render_request": {
+      "$ref": "#/$defs/ReportRenderRequest"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "source_discovery_request": {
+      "$ref": "#/$defs/SourceDiscoveryRequest"
+    },
+    "source_discovery_result": {
+      "$ref": "#/$defs/SourceDiscoveryResult"
+    },
+    "source_fetch_request": {
+      "$ref": "#/$defs/SourceFetchRequest"
+    },
+    "source_fetch_result": {
+      "$ref": "#/$defs/SourceFetchResult"
+    },
+    "state_transition_record": {
+      "$ref": "#/$defs/StateTransitionRecord"
+    },
+    "storage_record": {
+      "$ref": "#/$defs/StorageRecord"
+    },
+    "storage_write_request": {
+      "$ref": "#/$defs/StorageWriteRequest"
+    },
+    "storage_write_result": {
+      "$ref": "#/$defs/StorageWriteResult"
+    },
+    "task_request": {
+      "$ref": "#/$defs/TaskRequest"
+    },
+    "topic": {
+      "$ref": "#/$defs/Topic"
+    }
+  },
+  "required": [
+    "money",
+    "money_range",
+    "idempotency_key",
+    "investment_profile",
+    "asset",
+    "position",
+    "market_snapshot",
+    "topic",
+    "entity",
+    "exposure",
+    "source",
+    "external_document_content",
+    "raw_document_control",
+    "raw_document",
+    "discovered_document",
+    "event_cluster",
+    "evidence_draft",
+    "evidence",
+    "evidence_score",
+    "evidence_extraction_request",
+    "evidence_extraction_result",
+    "decision_context",
+    "decision_result",
+    "analysis_result",
+    "report",
+    "job_run",
+    "state_transition_record",
+    "source_discovery_request",
+    "source_discovery_result",
+    "source_fetch_request",
+    "source_fetch_result",
+    "market_data_request",
+    "analysis_request",
+    "report_render_request",
+    "rendered_report",
+    "notification_message",
+    "delivery_receipt",
+    "task_request",
+    "dispatch_receipt",
+    "storage_write_request",
+    "storage_write_result",
+    "storage_record"
+  ],
+  "title": "DomainContractBundle",
+  "type": "object",
+  "x-schema-version": "1.0"
+}
