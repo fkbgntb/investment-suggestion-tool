@@ -18,6 +18,7 @@ from app.services.evidence_scoring import EvidenceScoringService
 from app.services.gdelt_collection import GDELTCollectionService
 from app.services.normalization import NormalizationService
 from app.services.relevance import RelevanceService
+from app.services.reports import ReportService
 from app.services.scheduler import DurableJobScheduler, WindowCollectionResult
 from app.services.sec_collection import SECCollectionService
 from app.services.sources import SourceService
@@ -115,6 +116,7 @@ async def run(*, force: bool = False) -> int:
         extraction_counts = (0, 0, 0)
         scoring_counts = (0, 0, 0)
         synthesis_counts = (0, 0, 0)
+        report_counts = (0, 0)
         normalized_at = datetime.now(UTC)
         with database.session() as session:
             tasks = TaskQueueRepository(session, settings.portfolio_workspace_id).list_due(
@@ -168,6 +170,9 @@ async def run(*, force: bool = False) -> int:
                 max_calls_per_day=settings.deepseek_synthesis_max_calls_per_day,
                 daily_token_budget=settings.deepseek_synthesis_daily_token_budget,
             ).synthesize_pending(now=normalized_at)
+            report_counts = await ReportService(
+                session, settings.portfolio_workspace_id
+            ).generate_pending(now=normalized_at)
     finally:
         database.dispose()
     print(f"scheduler status: {outcome.status}")
@@ -190,6 +195,8 @@ async def run(*, force: bool = False) -> int:
     print(f"analyses completed: {synthesis_counts[0]}")
     print(f"degraded analyses: {synthesis_counts[1]}")
     print(f"synthesis budget fallbacks: {synthesis_counts[2]}")
+    print(f"reports generated: {report_counts[0]}")
+    print(f"stale reports generated: {report_counts[1]}")
     return 0 if outcome.status in {"SUCCEEDED", "NOT_DUE", "LOCKED"} else 1
 
 

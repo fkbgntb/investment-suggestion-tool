@@ -766,6 +766,12 @@ class ReportRow(SnapshotMixin, Base):
             ondelete="CASCADE",
             name="fk_reports_workspace_analysis",
         ),
+        UniqueConstraint(
+            "workspace_id",
+            "analysis_run_id",
+            "template_version",
+            name="uq_reports_workspace_analysis_template",
+        ),
     )
 
     report_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -773,7 +779,24 @@ class ReportRow(SnapshotMixin, Base):
     pipeline_version: Mapped[str] = mapped_column(String(120), nullable=False)
     rule_version: Mapped[str] = mapped_column(String(120), nullable=False)
     prompt_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    template_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    media_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    rendered_content: Mapped[str] = mapped_column(Text, nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
     input_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class ImmutableReportError(RuntimeError):
+    """Rendered report snapshots cannot be edited or deleted in place."""
+
+
+@event.listens_for(Session, "before_flush")
+def _protect_reports(session: Session, _flush_context: object, _instances: object) -> None:
+    if any(isinstance(row, ReportRow) for row in session.dirty):
+        raise ImmutableReportError("report snapshots cannot be updated")
+    if any(isinstance(row, ReportRow) for row in session.deleted):
+        raise ImmutableReportError("report snapshots cannot be deleted directly")
 
 
 class AuditEventRow(WorkspaceScopedMixin, Base):
