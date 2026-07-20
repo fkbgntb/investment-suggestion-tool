@@ -3791,6 +3791,15 @@
           "title": "Asset Id",
           "type": "string"
         },
+        "data_as_of": {
+          "format": "date-time",
+          "title": "Data As Of",
+          "type": "string"
+        },
+        "data_is_stale": {
+          "title": "Data Is Stale",
+          "type": "boolean"
+        },
         "decision": {
           "$ref": "#/$defs/DecisionResult"
         },
@@ -3858,6 +3867,27 @@
           "title": "Source Ids",
           "type": "array"
         },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReportSource"
+          },
+          "maxItems": 1000,
+          "title": "Sources",
+          "type": "array"
+        },
+        "stale_after_hours": {
+          "default": 30,
+          "maximum": 720,
+          "minimum": 1,
+          "title": "Stale After Hours",
+          "type": "integer"
+        },
+        "template_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Template Version",
+          "type": "string"
+        },
         "topic_ids": {
           "items": {
             "maxLength": 128,
@@ -3877,12 +3907,96 @@
         "topic_ids",
         "decision",
         "analysis",
+        "data_as_of",
+        "data_is_stale",
         "generated_at",
         "pipeline_version",
         "rule_version",
-        "prompt_version"
+        "prompt_version",
+        "template_version"
       ],
       "title": "Report",
+      "type": "object"
+    },
+    "ReportDifference": {
+      "additionalProperties": false,
+      "properties": {
+        "added_evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Added Evidence Ids",
+          "type": "array"
+        },
+        "confidence_change": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": -1.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Confidence Change"
+        },
+        "decision_changed": {
+          "title": "Decision Changed",
+          "type": "boolean"
+        },
+        "newer_label": {
+          "$ref": "#/$defs/SuggestionLabel"
+        },
+        "newer_report_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Newer Report Id",
+          "type": "string"
+        },
+        "older_label": {
+          "$ref": "#/$defs/SuggestionLabel"
+        },
+        "older_report_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Older Report Id",
+          "type": "string"
+        },
+        "removed_evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Removed Evidence Ids",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "older_report_id",
+        "newer_report_id",
+        "decision_changed",
+        "older_label",
+        "newer_label",
+        "confidence_change"
+      ],
+      "title": "ReportDifference",
       "type": "object"
     },
     "ReportFormat": {
@@ -3915,6 +4029,58 @@
         "output_format"
       ],
       "title": "ReportRenderRequest",
+      "type": "object"
+    },
+    "ReportSource": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "health_status": {
+          "default": "UNKNOWN",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Health Status",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "source_id",
+        "title",
+        "url"
+      ],
+      "title": "ReportSource",
       "type": "object"
     },
     "RiskConstraints": {
@@ -5287,6 +5453,9 @@
     "report": {
       "$ref": "#/$defs/Report"
     },
+    "report_difference": {
+      "$ref": "#/$defs/ReportDifference"
+    },
     "report_render_request": {
       "$ref": "#/$defs/ReportRenderRequest"
     },
@@ -5388,6 +5557,7 @@
     "decision_result",
     "analysis_result",
     "report",
+    "report_difference",
     "job_run",
     "state_transition_record",
     "source_discovery_request",

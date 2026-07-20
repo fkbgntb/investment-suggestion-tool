@@ -5,7 +5,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.domain.analysis import AnalysisResult, DecisionContext, DecisionResult, Report
+from app.domain.analysis import (
+    AnalysisResult,
+    DecisionContext,
+    DecisionResult,
+    Report,
+    ReportDifference,
+)
 from app.domain.base import DomainModel, IdempotencyKey, Money, MoneyRange
 from app.domain.collection import (
     FetchFailure,
@@ -118,6 +124,7 @@ class DomainContractBundle(DomainModel):
     decision_result: DecisionResult
     analysis_result: AnalysisResult
     report: Report
+    report_difference: ReportDifference
     job_run: JobRun
     state_transition_record: StateTransitionRecord
     source_discovery_request: SourceDiscoveryRequest

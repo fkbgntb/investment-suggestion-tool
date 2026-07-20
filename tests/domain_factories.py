@@ -147,10 +147,13 @@ def report() -> Report:
         analysis=analysis_result(),
         source_ids=("source-1",),
         evidence_ids=("evidence-1",),
+        data_as_of=NOW,
+        data_is_stale=False,
         generated_at=NOW,
         pipeline_version="pipeline-v1",
         rule_version="rule-v1",
         prompt_version="prompt-v1",
+        template_version="template-v1",
     )
 
 

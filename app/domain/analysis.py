@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Literal
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AnyHttpUrl, AwareDatetime, Field, model_validator
 
 from app.domain.base import DomainModel, Identifier, MoneyRange, SignedRatio, UnitInterval
 from app.domain.enums import SuggestionLabel
@@ -169,6 +170,25 @@ class AnalysisResult(DomainModel):
         return self
 
 
+class ReportSource(DomainModel):
+    evidence_id: Identifier
+    source_id: Identifier
+    title: str = Field(min_length=1, max_length=1000)
+    url: AnyHttpUrl
+    health_status: str = Field(default="UNKNOWN", min_length=1, max_length=64)
+
+
+class ReportDifference(DomainModel):
+    older_report_id: Identifier
+    newer_report_id: Identifier
+    decision_changed: bool
+    older_label: SuggestionLabel
+    newer_label: SuggestionLabel
+    confidence_change: Decimal = Field(ge=Decimal("-1"), le=Decimal("1"))
+    added_evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
+    removed_evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
+
+
 class Report(DomainModel):
     report_id: Identifier
     asset_id: Identifier
@@ -177,10 +197,15 @@ class Report(DomainModel):
     analysis: AnalysisResult
     source_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
     evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
+    sources: tuple[ReportSource, ...] = Field(default_factory=tuple, max_length=1000)
+    data_as_of: AwareDatetime
+    data_is_stale: bool
+    stale_after_hours: int = Field(default=30, ge=1, le=24 * 30)
     generated_at: AwareDatetime
     pipeline_version: str = Field(min_length=1, max_length=120)
     rule_version: str = Field(min_length=1, max_length=120)
     prompt_version: str = Field(min_length=1, max_length=120)
+    template_version: str = Field(min_length=1, max_length=120)
     advisory_only: Literal[True] = True
     disclaimer: Literal["仅供个人决策参考；系统不执行交易，所有实际操作由用户独立判断和完成。"] = (
         ADVISORY_DISCLAIMER
@@ -203,4 +228,10 @@ class Report(DomainModel):
             raise ValueError("decision evidence must be listed by the report")
         if not set(self.analysis.evidence_ids).issubset(known_evidence):
             raise ValueError("analysis evidence must be listed by the report")
+        if any(source.evidence_id not in known_evidence for source in self.sources):
+            raise ValueError("report source references unknown evidence")
+        if any(source.source_id not in set(self.source_ids) for source in self.sources):
+            raise ValueError("report source link must use a listed source id")
+        if self.generated_at < self.data_as_of:
+            raise ValueError("report cannot be generated before its data timestamp")
         return self

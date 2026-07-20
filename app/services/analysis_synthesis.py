@@ -17,7 +17,14 @@ from app.ai.synthesis import (
 from app.config import Settings
 from app.domain.analysis import AnalysisResult, DecisionContext, DecisionResult
 from app.domain.contracts import AnalysisRequest
-from app.storage.models import AnalysisResultRow, AnalysisRunRow, DecisionResultRow
+from app.domain.enums import DocumentState
+from app.storage.models import (
+    AnalysisResultRow,
+    AnalysisRunRow,
+    DecisionResultRow,
+    EvidenceItemRow,
+    RawDocumentRow,
+)
 
 
 class SynthesisProvider(Protocol):
@@ -175,6 +182,27 @@ class AnalysisSynthesisService:
             "analysis_degraded": result.degraded,
         }
         run.updated_at = result.analyzed_at
+        context_payload = run.input_snapshot.get("context", run.input_snapshot)
+        analyzed_evidence_ids = tuple(
+            item["evidence_id"] for item in context_payload.get("evidence", ())
+        )
+        evidence_rows = self.session.scalars(
+            select(EvidenceItemRow).where(
+                EvidenceItemRow.workspace_id == self.workspace_id,
+                EvidenceItemRow.evidence_id.in_(analyzed_evidence_ids),
+            )
+        ).all()
+        for evidence_row in evidence_rows:
+            raw = self.session.scalar(
+                select(RawDocumentRow).where(
+                    RawDocumentRow.workspace_id == self.workspace_id,
+                    RawDocumentRow.document_id == evidence_row.document_id,
+                )
+            )
+            if raw is not None:
+                raw.state = DocumentState.ANALYZED.value
+                raw.state_version += 1
+                raw.updated_at = result.analyzed_at
 
     def _daily_usage(self, now: datetime) -> tuple[int, int]:
         normalized = now.astimezone(UTC)
