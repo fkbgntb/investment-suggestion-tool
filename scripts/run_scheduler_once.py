@@ -13,6 +13,7 @@ from app.collectors.registry import build_default_adapter_registry
 from app.collectors.sec import SECCompany
 from app.config import Settings
 from app.services.evidence_extraction import EvidenceExtractionService, build_evidence_provider
+from app.services.evidence_scoring import EvidenceScoringService
 from app.services.gdelt_collection import GDELTCollectionService
 from app.services.normalization import NormalizationService
 from app.services.relevance import RelevanceService
@@ -111,6 +112,7 @@ async def run(*, force: bool = False) -> int:
         normalization_counts = (0, 0, 0)
         relevance_counts = (0, 0, 0)
         extraction_counts = (0, 0, 0)
+        scoring_counts = (0, 0, 0)
         normalized_at = datetime.now(UTC)
         with database.session() as session:
             tasks = TaskQueueRepository(session, settings.portfolio_workspace_id).list_due(
@@ -148,6 +150,9 @@ async def run(*, force: bool = False) -> int:
                 max_calls_per_day=settings.deepseek_max_calls_per_day,
                 daily_token_budget=settings.deepseek_daily_token_budget,
             ).extract_pending(now=normalized_at)
+            scoring_counts = EvidenceScoringService(
+                session, settings.portfolio_workspace_id
+            ).score_pending(now=normalized_at)
     finally:
         database.dispose()
     print(f"scheduler status: {outcome.status}")
@@ -164,6 +169,9 @@ async def run(*, force: bool = False) -> int:
     print(f"evidence extractions succeeded: {extraction_counts[0]}")
     print(f"evidence extractions need review: {extraction_counts[1]}")
     print(f"AI daily budget reached: {bool(extraction_counts[2])}")
+    print(f"evidence scores created: {scoring_counts[0]}")
+    print(f"positive evidence: {scoring_counts[1]}")
+    print(f"negative evidence: {scoring_counts[2]}")
     return 0 if outcome.status in {"SUCCEEDED", "NOT_DUE", "LOCKED"} else 1
 
 
