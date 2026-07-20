@@ -128,6 +128,8 @@ def analysis_result() -> AnalysisResult:
         bearish_factors=("模拟空方因素",),
         uncertainties=("模拟未知因素",),
         evidence_ids=("evidence-1",),
+        suggested_action=SuggestionLabel.HOLD,
+        allowed_actions=(SuggestionLabel.HOLD,),
         confidence=Decimal("0.6"),
         pipeline_version="pipeline-v1",
         model_version="mock-v1",

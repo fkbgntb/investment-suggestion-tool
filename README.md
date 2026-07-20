@@ -24,9 +24,10 @@
 - [x] 步骤 13：DeepSeek/规则替代的受限结构化证据抽取
 - [x] 步骤 14：确定性证据评分、时间衰减和转载独立性
 - [x] 步骤 15：确定性投资决策、本地风险边界和不可变输入快照
+- [x] 步骤 16：规则边界内的 AI 多空综合、引用校验和无密钥降级分析
 
 应用可以在 Windows 本机每三小时运行 GDELT 和已配置的 SEC 来源，并在休眠后补抓遗漏窗口；新文档
-会自动清洗、去重、筛除明显无关内容，并将相关文档转换为结构化证据和透明分数；尚未实现最终建议或投资报告页面。SEC 真实请求前仍需按官方规则配置邮箱。
+会自动清洗、去重、筛除明显无关内容，并将相关文档转换为结构化证据和透明分数；已有确定性建议与可降级的 AI 综合引擎，尚未实现完整投资报告和可视化页面。SEC 真实请求前仍需按官方规则配置邮箱。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 信息源配置说明见 [docs/source-registry.md](docs/source-registry.md)。
@@ -38,6 +39,7 @@ SEC 披露采集说明见 [docs/sec.md](docs/sec.md)。
 DeepSeek 隔离、预算和证据 Schema 说明见 [docs/ai-evidence.md](docs/ai-evidence.md)。
 确定性评分和转载独立性说明见 [docs/evidence-scoring.md](docs/evidence-scoring.md)。
 确定性投资决策说明见 [docs/decision-policy.md](docs/decision-policy.md)。
+AI 综合的脱敏输入、越界拒绝和降级路径见 [docs/analysis-synthesis.md](docs/analysis-synthesis.md)。
 
 ## 本地开发
 
