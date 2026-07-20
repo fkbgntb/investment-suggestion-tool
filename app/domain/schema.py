@@ -46,6 +46,7 @@ from app.domain.evidence import (
     EvidenceDraft,
     EvidenceExtractionRequest,
     EvidenceExtractionResult,
+    EvidenceModelOutput,
     EvidenceScore,
 )
 from app.domain.jobs import JobRun
@@ -112,6 +113,7 @@ class DomainContractBundle(DomainModel):
     evidence_score: EvidenceScore
     evidence_extraction_request: EvidenceExtractionRequest
     evidence_extraction_result: EvidenceExtractionResult
+    evidence_model_output: EvidenceModelOutput
     decision_context: DecisionContext
     decision_result: DecisionResult
     analysis_result: AnalysisResult

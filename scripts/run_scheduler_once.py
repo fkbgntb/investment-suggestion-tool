@@ -12,6 +12,7 @@ from app.collectors.factory import build_safe_http_client
 from app.collectors.registry import build_default_adapter_registry
 from app.collectors.sec import SECCompany
 from app.config import Settings
+from app.services.evidence_extraction import EvidenceExtractionService, build_evidence_provider
 from app.services.gdelt_collection import GDELTCollectionService
 from app.services.normalization import NormalizationService
 from app.services.relevance import RelevanceService
@@ -109,6 +110,7 @@ async def run(*, force: bool = False) -> int:
 
         normalization_counts = (0, 0, 0)
         relevance_counts = (0, 0, 0)
+        extraction_counts = (0, 0, 0)
         normalized_at = datetime.now(UTC)
         with database.session() as session:
             tasks = TaskQueueRepository(session, settings.portfolio_workspace_id).list_due(
@@ -132,6 +134,20 @@ async def run(*, force: bool = False) -> int:
                 ).classify_pending(now=normalized_at)
             except RuntimeError as error:
                 print(f"relevance screening skipped: {error}")
+            provider = build_evidence_provider(settings)
+            extraction_counts = await EvidenceExtractionService(
+                session,
+                settings.portfolio_workspace_id,
+                provider,
+                model_version=(
+                    settings.deepseek_model
+                    if settings.deepseek_api_key is not None
+                    else "rules-1.0.0"
+                ),
+                max_input_characters=settings.deepseek_max_input_characters,
+                max_calls_per_day=settings.deepseek_max_calls_per_day,
+                daily_token_budget=settings.deepseek_daily_token_budget,
+            ).extract_pending(now=normalized_at)
     finally:
         database.dispose()
     print(f"scheduler status: {outcome.status}")
@@ -145,6 +161,9 @@ async def run(*, force: bool = False) -> int:
     print(f"relevant documents: {relevance_counts[0]}")
     print(f"relevance review documents: {relevance_counts[1]}")
     print(f"irrelevant documents: {relevance_counts[2]}")
+    print(f"evidence extractions succeeded: {extraction_counts[0]}")
+    print(f"evidence extractions need review: {extraction_counts[1]}")
+    print(f"AI daily budget reached: {bool(extraction_counts[2])}")
     return 0 if outcome.status in {"SUCCEEDED", "NOT_DUE", "LOCKED"} else 1
 
 

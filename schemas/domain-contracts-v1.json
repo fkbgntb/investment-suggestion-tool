@@ -877,6 +877,13 @@
           "title": "Claim",
           "type": "string"
         },
+        "claim_type": {
+          "default": "unspecified",
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Claim Type",
+          "type": "string"
+        },
         "confidence": {
           "anyOf": [
             {
@@ -894,6 +901,21 @@
         "direction": {
           "$ref": "#/$defs/EvidenceDirection"
         },
+        "directness": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Directness"
+        },
         "entity_ids": {
           "items": {
             "maxLength": 128,
@@ -904,6 +926,17 @@
           "maxItems": 100,
           "title": "Entity Ids",
           "type": "array"
+        },
+        "impact_horizon": {
+          "default": "UNKNOWN",
+          "enum": [
+            "SHORT",
+            "MEDIUM",
+            "LONG",
+            "UNKNOWN"
+          ],
+          "title": "Impact Horizon",
+          "type": "string"
         },
         "quote": {
           "anyOf": [
@@ -970,6 +1003,17 @@
           "title": "Document Id",
           "type": "string"
         },
+        "entity_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Entity Ids",
+          "type": "array"
+        },
         "language": {
           "maxLength": 16,
           "minLength": 2,
@@ -978,7 +1022,7 @@
           "type": "string"
         },
         "normalized_body": {
-          "maxLength": 200000,
+          "maxLength": 100000,
           "minLength": 1,
           "title": "Normalized Body",
           "type": "string"
@@ -989,11 +1033,52 @@
           "title": "Prompt Version",
           "type": "string"
         },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
           "title": "Schema Version",
           "type": "string"
+        },
+        "source_kind": {
+          "default": "UNKNOWN",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "maxLength": 20000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "suspicious_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Suspicious Flags",
+          "type": "array"
         },
         "title": {
           "maxLength": 1000,
@@ -1040,6 +1125,19 @@
           "title": "Document Id",
           "type": "string"
         },
+        "elapsed_ms": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Elapsed Ms",
+          "type": "integer"
+        },
+        "event_type": {
+          "default": "unknown",
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Event Type",
+          "type": "string"
+        },
         "evidence": {
           "items": {
             "$ref": "#/$defs/EvidenceDraft"
@@ -1048,11 +1146,23 @@
           "title": "Evidence",
           "type": "array"
         },
+        "input_tokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Input Tokens",
+          "type": "integer"
+        },
         "model_version": {
           "maxLength": 120,
           "minLength": 1,
           "title": "Model Version",
           "type": "string"
+        },
+        "output_tokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Output Tokens",
+          "type": "integer"
         },
         "prompt_version": {
           "maxLength": 120,
@@ -1067,11 +1177,53 @@
           "title": "Provider Name",
           "type": "string"
         },
+        "related_entity_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Related Entity Ids",
+          "type": "array"
+        },
+        "related_topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Related Topic Ids",
+          "type": "array"
+        },
+        "relevance": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Relevance"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
           "title": "Schema Version",
           "type": "string"
+        },
+        "source_is_primary": {
+          "default": false,
+          "title": "Source Is Primary",
+          "type": "boolean"
         },
         "unknowns": {
           "items": {
@@ -1090,6 +1242,95 @@
         "completed_at"
       ],
       "title": "EvidenceExtractionResult",
+      "type": "object"
+    },
+    "EvidenceModelOutput": {
+      "additionalProperties": false,
+      "description": "Strict JSON object the model may produce; it contains no control fields.",
+      "properties": {
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/EvidenceDraft"
+          },
+          "maxItems": 50,
+          "title": "Claims",
+          "type": "array"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "event_type": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Event Type",
+          "type": "string"
+        },
+        "related_entities": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Related Entities",
+          "type": "array"
+        },
+        "related_topics": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Related Topics",
+          "type": "array"
+        },
+        "relevance": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Relevance"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_is_primary": {
+          "title": "Source Is Primary",
+          "type": "boolean"
+        },
+        "uncertainties": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Uncertainties",
+          "type": "array"
+        }
+      },
+      "required": [
+        "document_id",
+        "relevance",
+        "event_type",
+        "source_is_primary"
+      ],
+      "title": "EvidenceModelOutput",
       "type": "object"
     },
     "EvidenceScore": {
@@ -4529,6 +4770,9 @@
     "evidence_extraction_result": {
       "$ref": "#/$defs/EvidenceExtractionResult"
     },
+    "evidence_model_output": {
+      "$ref": "#/$defs/EvidenceModelOutput"
+    },
     "evidence_score": {
       "$ref": "#/$defs/EvidenceScore"
     },
@@ -4712,6 +4956,7 @@
     "evidence_score",
     "evidence_extraction_request",
     "evidence_extraction_result",
+    "evidence_model_output",
     "decision_context",
     "decision_result",
     "analysis_result",

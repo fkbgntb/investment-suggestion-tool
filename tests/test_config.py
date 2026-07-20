@@ -38,6 +38,17 @@ def test_deepseek_key_is_stored_as_secret(monkeypatch: pytest.MonkeyPatch) -> No
     assert isinstance(settings.deepseek_api_key, SecretStr)
     assert "test-only-secret-value" not in repr(settings.deepseek_api_key)
 
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "")
+    assert Settings(_env_file=None).deepseek_api_key is None
+
+
+def test_deepseek_endpoint_is_pinned_to_the_official_https_host() -> None:
+    assert str(Settings(_env_file=None).deepseek_base_url) == "https://api.deepseek.com/"
+    with pytest.raises(ValidationError, match="official HTTPS host"):
+        Settings(_env_file=None, deepseek_base_url="https://attacker.example/")
+    with pytest.raises(ValidationError, match="official HTTPS host"):
+        Settings(_env_file=None, deepseek_base_url="https://api.deepseek.com/redirect")
+
 
 def test_collector_proxy_is_optional_and_typed() -> None:
     direct = Settings(_env_file=None)
