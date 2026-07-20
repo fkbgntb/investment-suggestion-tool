@@ -635,6 +635,29 @@ class CrawlRunRepository:
         self.session.flush()
         return True
 
+    def mark_succeeded(
+        self,
+        *,
+        workspace_id: str,
+        crawl_run_id: str,
+        finished_at: datetime,
+        summary: dict[str, Any],
+    ) -> bool:
+        row = self.session.scalar(
+            select(CrawlRunRow).where(
+                CrawlRunRow.workspace_id == workspace_id,
+                CrawlRunRow.crawl_run_id == crawl_run_id,
+            )
+        )
+        if row is None:
+            return False
+        row.status = "SUCCEEDED"
+        row.finished_at = finished_at
+        row.payload = {**row.payload, "result": summary}
+        row.updated_at = finished_at
+        self.session.flush()
+        return True
+
     @staticmethod
     def _assert_same_operation(existing: CrawlRunRow, value: CrawlRunInput) -> None:
         if existing.source_id != value.source_id or existing.payload != value.payload:
@@ -674,6 +697,7 @@ class RawDocumentRepository:
             metadata_payload={
                 "author": document.external.author,
                 "language": document.external.language,
+                **document.external.metadata,
             },
         )
         try:
@@ -698,6 +722,20 @@ class RawDocumentRepository:
                 RawDocumentRow.workspace_id == self.workspace_id,
                 RawDocumentRow.document_id == document_id,
             )
+        )
+
+    def count_since(self, *, source_id: str, since: datetime) -> int:
+        return int(
+            self.session.scalar(
+                select(func.count())
+                .select_from(RawDocumentRow)
+                .where(
+                    RawDocumentRow.workspace_id == self.workspace_id,
+                    RawDocumentRow.source_id == source_id,
+                    RawDocumentRow.fetched_at >= since,
+                )
+            )
+            or 0
         )
 
     def apply_transition(self, transition: StateTransitionRecord) -> bool:

@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "gdelt-global-news",
+  "name": "GDELT DOC 2.0",
+  "kind": "AGGREGATOR",
+  "trust_tier": "SECONDARY",
+  "base_url": "https://api.gdeltproject.org/api/v2/doc/doc",
+  "regions": ["global"],
+  "languages": ["multi"],
+  "enabled": true,
+  "adapter_name": "gdelt-doc",
+  "crawl_interval_hours": 3,
+  "allow_fulltext": false,
+  "allowed_domains": ["api.gdeltproject.org"],
+  "terms_url": "https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/",
+  "config_version": "1.0"
+}

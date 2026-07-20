@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import AnyHttpUrl, AwareDatetime, Field, model_validator
+from pydantic import AnyHttpUrl, AwareDatetime, Field, JsonValue, model_validator
 
 from app.domain.base import DomainModel, IdempotencyKey, Identifier, Sha256
 from app.domain.enums import DocumentState
@@ -17,6 +17,7 @@ class ExternalDocumentContent(DomainModel):
     published_at: AwareDatetime | None = None
     author: str | None = Field(default=None, max_length=300)
     language: str = Field(min_length=2, max_length=16, pattern=r"^[A-Za-z-]+$")
+    metadata: dict[str, JsonValue] = Field(default_factory=dict, max_length=100)
 
 
 class RawDocumentControl(DomainModel):
@@ -46,6 +47,12 @@ class DiscoveredDocument(DomainModel):
     source_url: AnyHttpUrl
     discovered_at: AwareDatetime
     external_reference: str | None = Field(default=None, max_length=300)
+    title: str | None = Field(default=None, max_length=1000)
+    summary: str | None = Field(default=None, max_length=20_000)
+    publisher: str | None = Field(default=None, max_length=300)
+    language: str | None = Field(default=None, max_length=32)
+    published_at: AwareDatetime | None = None
+    metadata: dict[str, JsonValue] = Field(default_factory=dict, max_length=100)
 
 
 class EventCluster(DomainModel):
