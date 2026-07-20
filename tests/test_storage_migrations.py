@@ -23,12 +23,14 @@ EXPECTED_TABLES = {
     "evidence_scores",
     "exposures",
     "idempotency_records",
+    "human_relevance_labels",
     "investment_profiles",
     "normalized_documents",
     "positions",
     "position_snapshots",
     "raw_documents",
     "reports",
+    "relevance_assessments",
     "scheduled_tasks",
     "scheduler_states",
     "source_adapter_states",
@@ -64,12 +66,12 @@ def test_empty_database_upgrades_and_can_round_trip_old_revision(tmp_path: Path)
         assert "raw_document_retention_days" in columns
     finally:
         engine.dispose()
-    assert revision(database_url) == "0007"
+    assert revision(database_url) == "0008"
 
     downgrade_database(database_url, "0001")
     assert revision(database_url) == "0001"
     upgrade_database(database_url)
-    assert revision(database_url) == "0007"
+    assert revision(database_url) == "0008"
 
 
 def test_version_one_database_with_existing_rows_upgrades_safely(tmp_path: Path) -> None:

@@ -14,6 +14,7 @@ from app.collectors.sec import SECCompany
 from app.config import Settings
 from app.services.gdelt_collection import GDELTCollectionService
 from app.services.normalization import NormalizationService
+from app.services.relevance import RelevanceService
 from app.services.scheduler import DurableJobScheduler, WindowCollectionResult
 from app.services.sec_collection import SECCollectionService
 from app.services.sources import SourceService
@@ -107,6 +108,7 @@ async def run(*, force: bool = False) -> int:
             ).run_due(now=datetime.now(UTC), runner=collect_window, cleanup=cleanup, force=force)
 
         normalization_counts = (0, 0, 0)
+        relevance_counts = (0, 0, 0)
         normalized_at = datetime.now(UTC)
         with database.session() as session:
             tasks = TaskQueueRepository(session, settings.portfolio_workspace_id).list_due(
@@ -124,6 +126,12 @@ async def run(*, force: bool = False) -> int:
                 task_repository = TaskQueueRepository(session, settings.portfolio_workspace_id)
                 for task in tasks:
                     task_repository.mark_succeeded(task.task_id, finished_at=normalized_at)
+            try:
+                relevance_counts = RelevanceService(
+                    session, settings.portfolio_workspace_id
+                ).classify_pending(now=normalized_at)
+            except RuntimeError as error:
+                print(f"relevance screening skipped: {error}")
     finally:
         database.dispose()
     print(f"scheduler status: {outcome.status}")
@@ -134,6 +142,9 @@ async def run(*, force: bool = False) -> int:
     print(f"normalized documents: {normalization_counts[0]}")
     print(f"exact duplicates: {normalization_counts[1]}")
     print(f"quarantined documents: {normalization_counts[2]}")
+    print(f"relevant documents: {relevance_counts[0]}")
+    print(f"relevance review documents: {relevance_counts[1]}")
+    print(f"irrelevant documents: {relevance_counts[2]}")
     return 0 if outcome.status in {"SUCCEEDED", "NOT_DUE", "LOCKED"} else 1
 
 

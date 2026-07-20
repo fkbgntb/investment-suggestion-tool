@@ -60,6 +60,7 @@ from app.domain.portfolio import (
     PurchaseLot,
     RedemptionFeeTier,
 )
+from app.domain.relevance import HumanRelevanceLabel, RelevanceAssessment, RelevanceRuleHit
 from app.domain.state_machine import StateTransitionRecord
 from app.domain.taxonomy import (
     Entity,
@@ -103,6 +104,9 @@ class DomainContractBundle(DomainModel):
     normalized_document: NormalizedDocument
     discovered_document: DiscoveredDocument
     event_cluster: EventCluster
+    relevance_rule_hit: RelevanceRuleHit
+    relevance_assessment: RelevanceAssessment
+    human_relevance_label: HumanRelevanceLabel
     evidence_draft: EvidenceDraft
     evidence: Evidence
     evidence_score: EvidenceScore

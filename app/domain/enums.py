@@ -126,6 +126,12 @@ class DocumentState(StrEnum):
     QUARANTINED = "QUARANTINED"
 
 
+class RelevanceLabel(StrEnum):
+    RELEVANT = "RELEVANT"
+    IRRELEVANT = "IRRELEVANT"
+    REVIEW = "REVIEW"
+
+
 class EvidenceDirection(StrEnum):
     POSITIVE = "POSITIVE"
     NEGATIVE = "NEGATIVE"

@@ -539,6 +539,58 @@ class EventClusterRow(SnapshotMixin, Base):
     canonical_document_id: Mapped[str] = mapped_column(String(128))
 
 
+class RelevanceAssessmentRow(SnapshotMixin, Base):
+    __tablename__ = "relevance_assessments"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "document_id"],
+            ["normalized_documents.workspace_id", "normalized_documents.document_id"],
+            ondelete="CASCADE",
+            name="fk_relevance_assessments_workspace_document",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "document_id",
+            "rule_version",
+            "taxonomy_version",
+            name="uq_relevance_assessments_workspace_document_versions",
+        ),
+        Index(
+            "ix_relevance_assessments_workspace_label",
+            "workspace_id",
+            "label",
+        ),
+    )
+
+    assessment_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    document_id: Mapped[str] = mapped_column(String(128))
+    label: Mapped[str] = mapped_column(String(32), nullable=False)
+    score: Mapped[str] = mapped_column(String(16), nullable=False)
+    rule_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    taxonomy_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    assessed_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
+class HumanRelevanceLabelRow(SnapshotMixin, Base):
+    __tablename__ = "human_relevance_labels"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "document_id"],
+            ["normalized_documents.workspace_id", "normalized_documents.document_id"],
+            ondelete="CASCADE",
+            name="fk_human_relevance_labels_workspace_document",
+        ),
+        UniqueConstraint(
+            "workspace_id", "label_id", name="uq_human_relevance_labels_workspace_label"
+        ),
+    )
+
+    label_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    document_id: Mapped[str] = mapped_column(String(128))
+    label: Mapped[str] = mapped_column(String(32), nullable=False)
+    labeled_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
 class EvidenceItemRow(SnapshotMixin, Base):
     __tablename__ = "evidence_items"
     __table_args__ = (
