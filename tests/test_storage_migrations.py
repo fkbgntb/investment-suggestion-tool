@@ -28,6 +28,8 @@ EXPECTED_TABLES = {
     "position_snapshots",
     "raw_documents",
     "reports",
+    "source_adapter_states",
+    "source_health",
     "sources",
     "taxonomy_configurations",
     "topics",
@@ -59,12 +61,12 @@ def test_empty_database_upgrades_and_can_round_trip_old_revision(tmp_path: Path)
         assert "raw_document_retention_days" in columns
     finally:
         engine.dispose()
-    assert revision(database_url) == "0004"
+    assert revision(database_url) == "0005"
 
     downgrade_database(database_url, "0001")
     assert revision(database_url) == "0001"
     upgrade_database(database_url)
-    assert revision(database_url) == "0004"
+    assert revision(database_url) == "0005"
 
 
 def test_version_one_database_with_existing_rows_upgrades_safely(tmp_path: Path) -> None:

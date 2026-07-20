@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 from pydantic import AnyHttpUrl, AwareDatetime, Field, field_validator, model_validator
 
 from app.domain.base import DomainModel, Identifier, UnitInterval
@@ -216,9 +218,57 @@ class Source(DomainModel):
     languages: tuple[str, ...] = Field(min_length=1, max_length=20)
     enabled: bool = True
     adapter_name: Identifier
+    crawl_interval_hours: int = Field(default=3, ge=1, le=168)
+    allow_fulltext: bool = False
+    allowed_domains: tuple[str, ...] = Field(default_factory=tuple, min_length=1, max_length=100)
+    terms_url: AnyHttpUrl | None = None
+    config_version: str = Field(default="1.0", min_length=1, max_length=64)
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_legacy_allowed_domain(cls, value: object) -> object:
+        if isinstance(value, dict) and "allowed_domains" not in value:
+            hostname = urlsplit(str(value.get("base_url", ""))).hostname
+            if hostname:
+                return {**value, "allowed_domains": (hostname,)}
+        return value
+
+    @field_validator("regions", "languages")
+    @classmethod
+    def normalize_codes(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        normalized = tuple(value.strip().casefold() for value in values)
+        if any(not value or len(value) > 32 for value in normalized):
+            raise ValueError("source region and language codes must be short non-empty values")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("source region and language codes must be unique")
+        return normalized
+
+    @field_validator("allowed_domains")
+    @classmethod
+    def normalize_allowed_domains(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        normalized: list[str] = []
+        for value in values:
+            domain = value.strip().rstrip(".").encode("idna").decode("ascii").casefold()
+            if not domain or "*" in domain or "/" in domain or ":" in domain:
+                raise ValueError("allowed domains must be explicit hostnames")
+            normalized.append(domain)
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("allowed domains must be unique")
+        return tuple(normalized)
 
     @model_validator(mode="after")
     def community_sources_are_sentiment_only(self) -> Source:
-        if self.kind is SourceKind.COMMUNITY and self.trust_tier is not TrustTier.SENTIMENT_ONLY:
-            raise ValueError("community sources can only be used as sentiment")
+        if self.kind in {SourceKind.COMMUNITY, SourceKind.SOCIAL} and (
+            self.trust_tier is not TrustTier.SENTIMENT_ONLY
+        ):
+            raise ValueError("community and social sources can only be used as sentiment")
+        urls = (self.base_url, *((self.terms_url,) if self.terms_url is not None else ()))
+        for url in urls:
+            if url.scheme != "https":
+                raise ValueError("source configuration URLs must use HTTPS")
+            if url.username is not None or url.password is not None:
+                raise ValueError("source configuration URLs cannot contain credentials")
+        base_host = (self.base_url.host or "").encode("idna").decode("ascii").casefold()
+        if base_host not in self.allowed_domains:
+            raise ValueError("the base URL host must be explicitly allowed")
         return self

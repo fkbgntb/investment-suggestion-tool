@@ -2933,11 +2933,39 @@
           "title": "Adapter Name",
           "type": "string"
         },
+        "allow_fulltext": {
+          "default": false,
+          "title": "Allow Fulltext",
+          "type": "boolean"
+        },
+        "allowed_domains": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Allowed Domains",
+          "type": "array"
+        },
         "base_url": {
           "format": "uri",
           "minLength": 1,
           "title": "Base Url",
           "type": "string"
+        },
+        "config_version": {
+          "default": "1.0",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "crawl_interval_hours": {
+          "default": 3,
+          "maximum": 168,
+          "minimum": 1,
+          "title": "Crawl Interval Hours",
+          "type": "integer"
         },
         "enabled": {
           "default": true,
@@ -2984,6 +3012,20 @@
           "title": "Source Id",
           "type": "string"
         },
+        "terms_url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terms Url"
+        },
         "trust_tier": {
           "$ref": "#/$defs/TrustTier"
         }
@@ -2999,6 +3041,70 @@
         "adapter_name"
       ],
       "title": "Source",
+      "type": "object"
+    },
+    "SourceAdapterState": {
+      "additionalProperties": false,
+      "description": "Versioned, adapter-owned cursor state safe for optimistic updates.",
+      "properties": {
+        "adapter_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Adapter Name",
+          "type": "string"
+        },
+        "adapter_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Adapter Version",
+          "type": "string"
+        },
+        "cursor": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cursor"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "state_version": {
+          "default": 0,
+          "minimum": 0,
+          "title": "State Version",
+          "type": "integer"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "adapter_name",
+        "adapter_version",
+        "updated_at"
+      ],
+      "title": "SourceAdapterState",
       "type": "object"
     },
     "SourceDiscoveryRequest": {
@@ -3255,21 +3361,27 @@
     },
     "SourceHealthStatus": {
       "enum": [
+        "UNKNOWN",
         "HEALTHY",
         "DEGRADED",
-        "CIRCUIT_OPEN"
+        "CIRCUIT_OPEN",
+        "DISABLED"
       ],
       "title": "SourceHealthStatus",
       "type": "string"
     },
     "SourceKind": {
       "enum": [
+        "OFFICIAL",
         "REGULATOR",
         "FUND_MANAGER",
         "COMPANY_OFFICIAL",
+        "AGGREGATOR",
+        "MEDIA",
         "RESEARCH",
         "NEWS",
         "MARKET_DATA",
+        "SOCIAL",
         "COMMUNITY"
       ],
       "title": "SourceKind",
@@ -4006,6 +4118,9 @@
     "source": {
       "$ref": "#/$defs/Source"
     },
+    "source_adapter_state": {
+      "$ref": "#/$defs/SourceAdapterState"
+    },
     "source_discovery_request": {
       "$ref": "#/$defs/SourceDiscoveryRequest"
     },
@@ -4053,6 +4168,7 @@
     "url_policy",
     "fetch_failure",
     "source_health_snapshot",
+    "source_adapter_state",
     "investment_profile",
     "asset",
     "position",

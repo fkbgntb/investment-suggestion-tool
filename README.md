@@ -15,11 +15,13 @@
 - [x] 步骤 4：投资档案、持仓 CRUD、费用字段和不可变分析快照
 - [x] 步骤 5：版本化 Topic、Entity、影响关系和基金 Exposure 配置
 - [x] 步骤 6：统一抓取客户端、来源策略、限长、超时和失败隔离
+- [x] 步骤 7：信息源注册、适配器白名单、健康状态和版本化游标
 
-步骤 6 完成后，应用已经具备接入公开信息源所需的统一 HTTP 基础，但尚未接入 GDELT、
-SEC，仍不包含真实新闻、AI 调用或投资报告页面。
+步骤 7 完成后，应用已经具备受控添加和停用信息源的能力，但尚未接入 GDELT、SEC，
+仍不包含真实新闻、AI 调用或投资报告页面。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
+信息源配置说明见 [docs/source-registry.md](docs/source-registry.md)。
 
 ## 本地开发
 

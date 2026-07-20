@@ -13,7 +13,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.domain.collection import FetchFailure
+from app.domain.collection import FetchFailure, SourceAdapterState, SourceHealthSnapshot
 from app.domain.documents import RawDocument
 from app.domain.enums import TransitionOutcome
 from app.domain.portfolio import Asset, InvestmentProfile, Position, PositionAnalysisSnapshot
@@ -28,6 +28,8 @@ from app.storage.models import (
     PositionRow,
     PositionSnapshotRow,
     RawDocumentRow,
+    SourceAdapterStateRow,
+    SourceHealthRow,
     SourceRow,
     TaxonomyConfigurationRow,
     WorkspaceRow,
@@ -418,6 +420,148 @@ class SourceRepository:
         self.session.add(row)
         self.session.flush()
         return row
+
+    def get(self, source_id: str) -> Source | None:
+        row = self.session.scalar(
+            select(SourceRow).where(
+                SourceRow.workspace_id == self.workspace_id,
+                SourceRow.source_id == source_id,
+            )
+        )
+        return Source.model_validate(row.payload) if row is not None else None
+
+    def list(self, *, enabled_only: bool = False) -> tuple[Source, ...]:
+        statement = select(SourceRow).where(SourceRow.workspace_id == self.workspace_id)
+        if enabled_only:
+            statement = statement.where(SourceRow.enabled.is_(True))
+        rows = self.session.scalars(statement.order_by(SourceRow.source_id))
+        return tuple(Source.model_validate(row.payload) for row in rows)
+
+    def update(self, source: Source) -> bool:
+        statement = (
+            update(SourceRow)
+            .where(
+                SourceRow.workspace_id == self.workspace_id,
+                SourceRow.source_id == source.source_id,
+            )
+            .values(
+                base_url=str(source.base_url),
+                adapter_name=source.adapter_name,
+                enabled=source.enabled,
+                schema_version=source.schema_version,
+                payload=source.model_dump(mode="json"),
+                updated_at=utc_now(),
+            )
+        )
+        return self.session.execute(statement).rowcount == 1
+
+    def get_health(self, source_id: str) -> SourceHealthSnapshot | None:
+        row = self.session.scalar(
+            select(SourceHealthRow).where(
+                SourceHealthRow.workspace_id == self.workspace_id,
+                SourceHealthRow.source_id == source_id,
+            )
+        )
+        if row is None:
+            return None
+        return SourceHealthSnapshot(
+            source_id=row.source_id,
+            status=row.status,
+            consecutive_failures=row.consecutive_failures,
+            last_error_code=row.last_error_code,
+            last_success_at=row.last_success_at,
+            last_failure_at=row.last_failure_at,
+            circuit_open_until=row.circuit_open_until,
+        )
+
+    def save_health(self, snapshot: SourceHealthSnapshot) -> None:
+        row = self.session.scalar(
+            select(SourceHealthRow).where(
+                SourceHealthRow.workspace_id == self.workspace_id,
+                SourceHealthRow.source_id == snapshot.source_id,
+            )
+        )
+        values = snapshot.model_dump(mode="python", exclude={"schema_version", "source_id"})
+        if row is None:
+            self.session.add(
+                SourceHealthRow(
+                    source_id=snapshot.source_id,
+                    workspace_id=self.workspace_id,
+                    **values,
+                )
+            )
+        else:
+            for field, value in values.items():
+                setattr(row, field, value)
+            row.updated_at = utc_now()
+        self.session.flush()
+
+    def get_adapter_state(self, source_id: str) -> SourceAdapterState | None:
+        row = self.session.scalar(
+            select(SourceAdapterStateRow).where(
+                SourceAdapterStateRow.workspace_id == self.workspace_id,
+                SourceAdapterStateRow.source_id == source_id,
+            )
+        )
+        if row is None:
+            return None
+        return SourceAdapterState(
+            source_id=row.source_id,
+            adapter_name=row.adapter_name,
+            adapter_version=row.adapter_version,
+            state_version=row.state_version,
+            cursor=row.cursor,
+            updated_at=row.updated_at,
+        )
+
+    def save_adapter_state(
+        self,
+        state: SourceAdapterState,
+        *,
+        expected_version: int,
+    ) -> None:
+        current = self.get_adapter_state(state.source_id)
+        if current is None:
+            if expected_version != 0 or state.state_version != 1:
+                raise ConcurrentStateChange("adapter state version changed before persistence")
+            try:
+                with self.session.begin_nested():
+                    self.session.add(
+                        SourceAdapterStateRow(
+                            source_id=state.source_id,
+                            workspace_id=self.workspace_id,
+                            adapter_name=state.adapter_name,
+                            adapter_version=state.adapter_version,
+                            state_version=state.state_version,
+                            cursor=state.cursor,
+                            updated_at=state.updated_at,
+                        )
+                    )
+                    self.session.flush()
+            except IntegrityError as error:
+                raise ConcurrentStateChange(
+                    "adapter state version changed before persistence"
+                ) from error
+            return
+        if current.state_version != expected_version or state.state_version != expected_version + 1:
+            raise ConcurrentStateChange("adapter state version changed before persistence")
+        result = self.session.execute(
+            update(SourceAdapterStateRow)
+            .where(
+                SourceAdapterStateRow.workspace_id == self.workspace_id,
+                SourceAdapterStateRow.source_id == state.source_id,
+                SourceAdapterStateRow.state_version == expected_version,
+            )
+            .values(
+                adapter_name=state.adapter_name,
+                adapter_version=state.adapter_version,
+                state_version=state.state_version,
+                cursor=state.cursor,
+                updated_at=state.updated_at,
+            )
+        )
+        if result.rowcount != 1:
+            raise ConcurrentStateChange("adapter state version changed before persistence")
 
 
 class CrawlRunRepository:
