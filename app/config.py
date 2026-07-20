@@ -6,7 +6,7 @@ from ipaddress import ip_address
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AliasChoices, AnyHttpUrl, Field, SecretStr, model_validator
+from pydantic import AliasChoices, AnyHttpUrl, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     collector_proxy_url: AnyHttpUrl | None = None
     gdelt_max_records: int = Field(default=50, ge=1, le=250)
     gdelt_max_documents_per_day: int = Field(default=500, ge=1, le=10_000)
+    sec_contact_email: str | None = Field(default=None, max_length=254, repr=False)
+    sec_max_filings_per_company: int = Field(default=50, ge=1, le=250)
     deepseek_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices("DEEPSEEK_API_KEY", "INVEST_DEEPSEEK_API_KEY"),
@@ -69,6 +71,21 @@ class Settings(BaseSettings):
             "BACKUP_PASSPHRASE",
         ),
     )
+
+    @field_validator("sec_contact_email")
+    @classmethod
+    def validate_sec_contact_email(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().casefold()
+        if (
+            normalized.count("@") != 1
+            or normalized.startswith("@")
+            or normalized.endswith("@")
+            or "." not in normalized.rsplit("@", 1)[1]
+        ):
+            raise ValueError("SEC contact email is invalid")
+        return normalized
 
     @model_validator(mode="after")
     def validate_security_defaults(self) -> "Settings":

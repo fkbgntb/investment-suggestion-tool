@@ -1,0 +1,12 @@
+[
+  {
+    "entity_id": "company.nvidia",
+    "cik": "0001045810",
+    "forms": ["10-K", "10-Q", "8-K"]
+  },
+  {
+    "entity_id": "company.tsmc",
+    "cik": "0001046179",
+    "forms": ["20-F", "6-K"]
+  }
+]
