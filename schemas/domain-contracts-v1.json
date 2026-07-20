@@ -1582,6 +1582,67 @@
       "title": "FundFeePolicy",
       "type": "object"
     },
+    "HumanRelevanceLabel": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "default": "local_user",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "label": {
+          "$ref": "#/$defs/RelevanceLabel"
+        },
+        "label_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Label Id",
+          "type": "string"
+        },
+        "labeled_at": {
+          "format": "date-time",
+          "title": "Labeled At",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label_id",
+        "document_id",
+        "label",
+        "labeled_at"
+      ],
+      "title": "HumanRelevanceLabel",
+      "type": "object"
+    },
     "IdempotencyKey": {
       "additionalProperties": false,
       "description": "Stable key and payload digest required for mutating application operations.",
@@ -2904,6 +2965,177 @@
         "fee_rate"
       ],
       "title": "RedemptionFeeTier",
+      "type": "object"
+    },
+    "RelevanceAssessment": {
+      "additionalProperties": false,
+      "properties": {
+        "assessed_at": {
+          "format": "date-time",
+          "title": "Assessed At",
+          "type": "string"
+        },
+        "assessment_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Assessment Id",
+          "type": "string"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "entity_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Entity Ids",
+          "type": "array"
+        },
+        "hits": {
+          "items": {
+            "$ref": "#/$defs/RelevanceRuleHit"
+          },
+          "maxItems": 500,
+          "title": "Hits",
+          "type": "array"
+        },
+        "label": {
+          "$ref": "#/$defs/RelevanceLabel"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Reasons",
+          "type": "array"
+        },
+        "rule_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Score"
+        },
+        "taxonomy_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Taxonomy Version",
+          "type": "string"
+        },
+        "topic_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Topic Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "assessment_id",
+        "document_id",
+        "label",
+        "score",
+        "reasons",
+        "rule_version",
+        "taxonomy_version",
+        "assessed_at"
+      ],
+      "title": "RelevanceAssessment",
+      "type": "object"
+    },
+    "RelevanceLabel": {
+      "enum": [
+        "RELEVANT",
+        "IRRELEVANT",
+        "REVIEW"
+      ],
+      "title": "RelevanceLabel",
+      "type": "string"
+    },
+    "RelevanceRuleHit": {
+      "additionalProperties": false,
+      "properties": {
+        "points": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Points"
+        },
+        "rule_type": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Rule Type",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "term": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Term",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_type",
+        "term",
+        "target_id",
+        "points"
+      ],
+      "title": "RelevanceRuleHit",
       "type": "object"
     },
     "RenderedReport": {
@@ -4312,6 +4544,9 @@
     "fund_fee_policy": {
       "$ref": "#/$defs/FundFeePolicy"
     },
+    "human_relevance_label": {
+      "$ref": "#/$defs/HumanRelevanceLabel"
+    },
     "idempotency_key": {
       "$ref": "#/$defs/IdempotencyKey"
     },
@@ -4368,6 +4603,12 @@
     },
     "redemption_fee_tier": {
       "$ref": "#/$defs/RedemptionFeeTier"
+    },
+    "relevance_assessment": {
+      "$ref": "#/$defs/RelevanceAssessment"
+    },
+    "relevance_rule_hit": {
+      "$ref": "#/$defs/RelevanceRuleHit"
     },
     "rendered_report": {
       "$ref": "#/$defs/RenderedReport"
@@ -4463,6 +4704,9 @@
     "normalized_document",
     "discovered_document",
     "event_cluster",
+    "relevance_rule_hit",
+    "relevance_assessment",
+    "human_relevance_label",
     "evidence_draft",
     "evidence",
     "evidence_score",
