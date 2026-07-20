@@ -483,6 +483,44 @@ class RawDocumentRow(TimestampMixin, WorkspaceScopedMixin, Base):
     metadata_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
 
+class NormalizedDocumentRow(TimestampMixin, WorkspaceScopedMixin, Base):
+    __tablename__ = "normalized_documents"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "document_id"],
+            ["raw_documents.workspace_id", "raw_documents.document_id"],
+            ondelete="CASCADE",
+            name="fk_normalized_documents_workspace_document",
+        ),
+        UniqueConstraint(
+            "workspace_id", "document_id", name="uq_normalized_documents_workspace_document"
+        ),
+        Index(
+            "ix_normalized_documents_workspace_hash",
+            "workspace_id",
+            "normalized_hash",
+        ),
+        Index(
+            "ix_normalized_documents_workspace_url",
+            "workspace_id",
+            "canonical_url",
+        ),
+    )
+
+    normalized_document_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    document_id: Mapped[str] = mapped_column(String(128))
+    source_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    canonical_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    normalized_title: Mapped[str] = mapped_column(String(1000), nullable=False)
+    normalized_body: Mapped[str] = mapped_column(Text, nullable=False)
+    original_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    normalized_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    duplicate_of_document_id: Mapped[str | None] = mapped_column(String(128))
+    normalized_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(32), nullable=False, default="1.0")
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
 class EventClusterRow(SnapshotMixin, Base):
     __tablename__ = "event_clusters"
     __table_args__ = (
