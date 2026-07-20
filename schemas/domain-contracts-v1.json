@@ -878,7 +878,6 @@
           "type": "string"
         },
         "claim_type": {
-          "default": "unspecified",
           "maxLength": 120,
           "minLength": 1,
           "title": "Claim Type",
@@ -913,7 +912,6 @@
               "type": "string"
             }
           ],
-          "default": 0,
           "title": "Directness"
         },
         "entity_ids": {
@@ -928,7 +926,6 @@
           "type": "array"
         },
         "impact_horizon": {
-          "default": "UNKNOWN",
           "enum": [
             "SHORT",
             "MEDIUM",
@@ -987,7 +984,10 @@
         "claim",
         "direction",
         "topic_ids",
-        "confidence"
+        "confidence",
+        "claim_type",
+        "impact_horizon",
+        "directness"
       ],
       "title": "EvidenceDraft",
       "type": "object"
@@ -1336,6 +1336,47 @@
     "EvidenceScore": {
       "additionalProperties": false,
       "properties": {
+        "component_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Component Reasons",
+          "type": "array"
+        },
+        "confidence_cap": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence Cap"
+        },
+        "directness": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 1,
+          "title": "Directness"
+        },
         "evidence_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1371,6 +1412,13 @@
           ],
           "title": "Independence"
         },
+        "independent_source_count": {
+          "default": 1,
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Independent Source Count",
+          "type": "integer"
+        },
         "recency": {
           "anyOf": [
             {
@@ -1399,6 +1447,11 @@
           ],
           "title": "Relevance"
         },
+        "same_origin_reprint": {
+          "default": false,
+          "title": "Same Origin Reprint",
+          "type": "boolean"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
@@ -1415,6 +1468,10 @@
           "minLength": 1,
           "title": "Scoring Version",
           "type": "string"
+        },
+        "source_kind": {
+          "$ref": "#/$defs/SourceKind",
+          "default": "NEWS"
         },
         "source_quality": {
           "anyOf": [
@@ -1443,6 +1500,10 @@
             }
           ],
           "title": "Total"
+        },
+        "trust_tier": {
+          "$ref": "#/$defs/TrustTier",
+          "default": "SECONDARY"
         }
       },
       "required": [

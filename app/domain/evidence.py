@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import AwareDatetime, Field, model_validator
 
 from app.domain.base import DomainModel, Identifier, UnitInterval
-from app.domain.enums import EvidenceDirection
+from app.domain.enums import EvidenceDirection, SourceKind, TrustTier
 
 
 class EvidenceDraft(DomainModel):
@@ -20,9 +20,9 @@ class EvidenceDraft(DomainModel):
     entity_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=100)
     confidence: UnitInterval
     uncertainty: str | None = Field(default=None, max_length=2000)
-    claim_type: str = Field(default="unspecified", min_length=1, max_length=120)
-    impact_horizon: Literal["SHORT", "MEDIUM", "LONG", "UNKNOWN"] = "UNKNOWN"
-    directness: UnitInterval = 0
+    claim_type: str = Field(min_length=1, max_length=120)
+    impact_horizon: Literal["SHORT", "MEDIUM", "LONG", "UNKNOWN"]
+    directness: UnitInterval
 
 
 class Evidence(DomainModel):
@@ -42,22 +42,30 @@ class EvidenceScore(DomainModel):
     independence: UnitInterval
     recency: UnitInterval
     relevance: UnitInterval
+    directness: UnitInterval = 1
     extraction_confidence: UnitInterval
     total: UnitInterval
+    source_kind: SourceKind = SourceKind.NEWS
+    trust_tier: TrustTier = TrustTier.SECONDARY
+    independent_source_count: int = Field(default=1, ge=1, le=1000)
+    same_origin_reprint: bool = False
+    confidence_cap: UnitInterval | None = None
+    component_reasons: tuple[str, ...] = Field(default_factory=tuple, max_length=20)
     scoring_version: str = Field(min_length=1, max_length=120)
     scored_at: AwareDatetime
 
     @model_validator(mode="after")
-    def total_cannot_exceed_strongest_dimension(self) -> EvidenceScore:
+    def total_cannot_exceed_weakest_dimension(self) -> EvidenceScore:
         dimensions = (
             self.source_quality,
             self.independence,
             self.recency,
             self.relevance,
+            self.directness,
             self.extraction_confidence,
         )
-        if self.total > max(dimensions):
-            raise ValueError("total score cannot exceed every score dimension")
+        if self.total > min(dimensions):
+            raise ValueError("multiplicative total cannot exceed its weakest score dimension")
         return self
 
 
