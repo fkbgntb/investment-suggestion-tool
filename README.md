@@ -26,9 +26,10 @@
 - [x] 步骤 15：确定性投资决策、本地风险边界和不可变输入快照
 - [x] 步骤 16：规则边界内的 AI 多空综合、引用校验和无密钥降级分析
 - [x] 步骤 17：报告校验、XSS 安全 HTML、原始来源链接和不可变历史快照
+- [x] 步骤 18：本机个人 Web 页面、版本化 API、CSRF/同源边界和一键分析闭环
 
 应用可以在 Windows 本机每三小时运行 GDELT 和已配置的 SEC 来源，并在休眠后补抓遗漏窗口；新文档
-会自动清洗、去重、筛除明显无关内容，并将相关文档转换为结构化证据和透明分数；已有确定性建议与可降级的 AI 综合引擎，尚未实现完整投资报告和可视化页面。SEC 真实请求前仍需按官方规则配置邮箱。
+会自动清洗、去重、筛除明显无关内容，并将相关文档转换为结构化证据和透明分数；已有确定性建议、可降级的 AI 综合引擎、不可变 HTML 报告和本机可视化页面。SEC 真实请求前仍需按官方规则配置邮箱。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 信息源配置说明见 [docs/source-registry.md](docs/source-registry.md)。
@@ -42,6 +43,7 @@ DeepSeek 隔离、预算和证据 Schema 说明见 [docs/ai-evidence.md](docs/ai
 确定性投资决策说明见 [docs/decision-policy.md](docs/decision-policy.md)。
 AI 综合的脱敏输入、越界拒绝和降级路径见 [docs/analysis-synthesis.md](docs/analysis-synthesis.md)。
 报告校验、HTML 转义和历史快照说明见 [docs/report-rendering.md](docs/report-rendering.md)。
+本机页面、API 和一键闭环说明见 [docs/web-ui.md](docs/web-ui.md)。
 
 ## 本地开发
 
@@ -55,6 +57,7 @@ Copy-Item .env.example .env
 
 打开：
 
+- 个人工具首页：http://127.0.0.1:8000/
 - API 健康检查：http://127.0.0.1:8000/api/v1/health
 - API 文档：http://127.0.0.1:8000/docs
 
