@@ -42,6 +42,24 @@ class RawDocument(DomainModel):
     control: RawDocumentControl
 
 
+class NormalizedDocument(DomainModel):
+    document_id: Identifier
+    source_id: Identifier
+    canonical_url: AnyHttpUrl
+    title: str = Field(min_length=1, max_length=1000)
+    body: str = Field(min_length=1, max_length=100_000)
+    summary: str | None = Field(default=None, max_length=20_000)
+    original_language: str = Field(min_length=2, max_length=32)
+    detected_language: str = Field(min_length=2, max_length=16)
+    original_sha256: Sha256
+    normalized_sha256: Sha256
+    duplicate_of_document_id: Identifier | None = None
+    suspicious_flags: tuple[str, ...] = Field(default_factory=tuple, max_length=50)
+    published_at: AwareDatetime | None = None
+    discovered_at: AwareDatetime
+    normalized_at: AwareDatetime
+
+
 class DiscoveredDocument(DomainModel):
     source_id: Identifier
     source_url: AnyHttpUrl

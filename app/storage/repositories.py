@@ -724,6 +724,36 @@ class TaskQueueRepository:
             return False
         return True
 
+    def list_due(self, task_type: str, *, now: datetime) -> tuple[ScheduledTaskRow, ...]:
+        return tuple(
+            self.session.scalars(
+                select(ScheduledTaskRow)
+                .where(
+                    ScheduledTaskRow.workspace_id == self.workspace_id,
+                    ScheduledTaskRow.task_type == task_type,
+                    ScheduledTaskRow.status == "PENDING",
+                    ScheduledTaskRow.not_before <= now,
+                )
+                .order_by(ScheduledTaskRow.not_before, ScheduledTaskRow.task_id)
+            ).all()
+        )
+
+    def mark_succeeded(self, task_id: str, *, finished_at: datetime) -> bool:
+        row = self.session.scalar(
+            select(ScheduledTaskRow).where(
+                ScheduledTaskRow.workspace_id == self.workspace_id,
+                ScheduledTaskRow.task_id == task_id,
+                ScheduledTaskRow.status == "PENDING",
+            )
+        )
+        if row is None:
+            return False
+        row.status = "SUCCEEDED"
+        row.finished_at = finished_at
+        row.updated_at = finished_at
+        self.session.flush()
+        return True
+
 
 class CrawlRunRepository:
     def __init__(self, session: Session) -> None:

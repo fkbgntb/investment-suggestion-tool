@@ -13,13 +13,14 @@ from app.collectors.registry import build_default_adapter_registry
 from app.collectors.sec import SECCompany
 from app.config import Settings
 from app.services.gdelt_collection import GDELTCollectionService
+from app.services.normalization import NormalizationService
 from app.services.scheduler import DurableJobScheduler, WindowCollectionResult
 from app.services.sec_collection import SECCollectionService
 from app.services.sources import SourceService
 from app.storage.database import Database
 from app.storage.migrations import upgrade_database
 from app.storage.paths import prepare_storage_paths
-from app.storage.repositories import AuditRepository
+from app.storage.repositories import AuditRepository, TaskQueueRepository
 from app.storage.retention import purge_expired_raw_bodies
 
 
@@ -104,6 +105,25 @@ async def run(*, force: bool = False) -> int:
                 database,
                 settings.portfolio_workspace_id,
             ).run_due(now=datetime.now(UTC), runner=collect_window, cleanup=cleanup, force=force)
+
+        normalization_counts = (0, 0, 0)
+        normalized_at = datetime.now(UTC)
+        with database.session() as session:
+            tasks = TaskQueueRepository(session, settings.portfolio_workspace_id).list_due(
+                "process-new-documents", now=normalized_at
+            )
+            if tasks:
+                normalizer = NormalizationService(session, settings.portfolio_workspace_id)
+                totals = [0, 0, 0]
+                while True:
+                    batch = normalizer.process_pending(now=normalized_at)
+                    totals = [left + right for left, right in zip(totals, batch, strict=True)]
+                    if batch[0] + batch[2] < 500:
+                        break
+                normalization_counts = tuple(totals)
+                task_repository = TaskQueueRepository(session, settings.portfolio_workspace_id)
+                for task in tasks:
+                    task_repository.mark_succeeded(task.task_id, finished_at=normalized_at)
     finally:
         database.dispose()
     print(f"scheduler status: {outcome.status}")
@@ -111,6 +131,9 @@ async def run(*, force: bool = False) -> int:
     print(f"new documents: {outcome.created_count}")
     print(f"failed sources: {outcome.failed_source_count}")
     print(f"processing tasks: {outcome.processing_tasks}")
+    print(f"normalized documents: {normalization_counts[0]}")
+    print(f"exact duplicates: {normalization_counts[1]}")
+    print(f"quarantined documents: {normalization_counts[2]}")
     return 0 if outcome.status in {"SUCCEEDED", "NOT_DUE", "LOCKED"} else 1
 
 

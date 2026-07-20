@@ -2049,6 +2049,145 @@
       "title": "MoneyRange",
       "type": "object"
     },
+    "NormalizedDocument": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "maxLength": 100000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "canonical_url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Canonical Url",
+          "type": "string"
+        },
+        "detected_language": {
+          "maxLength": 16,
+          "minLength": 2,
+          "title": "Detected Language",
+          "type": "string"
+        },
+        "discovered_at": {
+          "format": "date-time",
+          "title": "Discovered At",
+          "type": "string"
+        },
+        "document_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "duplicate_of_document_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duplicate Of Document Id"
+        },
+        "normalized_at": {
+          "format": "date-time",
+          "title": "Normalized At",
+          "type": "string"
+        },
+        "normalized_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Normalized Sha256",
+          "type": "string"
+        },
+        "original_language": {
+          "maxLength": 32,
+          "minLength": 2,
+          "title": "Original Language",
+          "type": "string"
+        },
+        "original_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Original Sha256",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "maxLength": 20000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "suspicious_flags": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Suspicious Flags",
+          "type": "array"
+        },
+        "title": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "source_id",
+        "canonical_url",
+        "title",
+        "body",
+        "original_language",
+        "detected_language",
+        "original_sha256",
+        "normalized_sha256",
+        "discovered_at",
+        "normalized_at"
+      ],
+      "title": "NormalizedDocument",
+      "type": "object"
+    },
     "NotificationMessage": {
       "additionalProperties": false,
       "properties": {
@@ -4197,6 +4336,9 @@
     "money_range": {
       "$ref": "#/$defs/MoneyRange"
     },
+    "normalized_document": {
+      "$ref": "#/$defs/NormalizedDocument"
+    },
     "notification_message": {
       "$ref": "#/$defs/NotificationMessage"
     },
@@ -4318,6 +4460,7 @@
     "external_document_content",
     "raw_document_control",
     "raw_document",
+    "normalized_document",
     "discovered_document",
     "event_cluster",
     "evidence_draft",

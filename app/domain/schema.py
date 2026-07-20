@@ -37,6 +37,7 @@ from app.domain.documents import (
     DiscoveredDocument,
     EventCluster,
     ExternalDocumentContent,
+    NormalizedDocument,
     RawDocument,
     RawDocumentControl,
 )
@@ -99,6 +100,7 @@ class DomainContractBundle(DomainModel):
     external_document_content: ExternalDocumentContent
     raw_document_control: RawDocumentControl
     raw_document: RawDocument
+    normalized_document: NormalizedDocument
     discovered_document: DiscoveredDocument
     event_cluster: EventCluster
     evidence_draft: EvidenceDraft
