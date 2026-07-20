@@ -305,6 +305,15 @@
           "title": "Advisory Only",
           "type": "boolean"
         },
+        "allowed_labels": {
+          "items": {
+            "$ref": "#/$defs/SuggestionLabel"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Allowed Labels",
+          "type": "array"
+        },
         "context_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -364,6 +373,24 @@
           ],
           "default": null
         },
+        "reference_reduce_fraction": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Reduce Fraction"
+        },
         "rule_version": {
           "maxLength": 120,
           "minLength": 1,
@@ -397,6 +424,7 @@
         "label",
         "strength",
         "reasons",
+        "allowed_labels",
         "rule_version",
         "decided_at"
       ],
@@ -2974,6 +3002,18 @@
           "title": "Asset Id",
           "type": "string"
         },
+        "holding_period_data_complete": {
+          "default": false,
+          "title": "Holding Period Data Complete",
+          "type": "boolean"
+        },
+        "holding_period_days": {
+          "default": 0,
+          "maximum": 36500,
+          "minimum": 0,
+          "title": "Holding Period Days",
+          "type": "integer"
+        },
         "loss_boundary_used": {
           "anyOf": [
             {
@@ -3002,9 +3042,45 @@
           ],
           "title": "Portfolio Weight"
         },
+        "purchase_fee_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purchase Fee Rate"
+        },
         "recurring_contribution_active": {
           "title": "Recurring Contribution Active",
           "type": "boolean"
+        },
+        "redemption_fee_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Redemption Fee Rate"
         },
         "schema_version": {
           "const": "1.0",
@@ -3654,6 +3730,73 @@
           ],
           "title": "Maximum Position Loss Ratio"
         },
+        "maximum_purchase_fee_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 1,
+          "title": "Maximum Purchase Fee Rate"
+        },
+        "maximum_redemption_fee_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 1,
+          "title": "Maximum Redemption Fee Rate"
+        },
+        "maximum_reduce_fraction": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 0,
+          "title": "Maximum Reduce Fraction"
+        },
+        "maximum_topic_weight": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 1,
+          "title": "Maximum Topic Weight"
+        },
+        "minimum_holding_days_before_reduce": {
+          "default": 0,
+          "maximum": 36500,
+          "minimum": 0,
+          "title": "Minimum Holding Days Before Reduce",
+          "type": "integer"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
@@ -3670,6 +3813,21 @@
             }
           ],
           "default": null
+        },
+        "target_topic_weight": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": 1,
+          "title": "Target Topic Weight"
         }
       },
       "required": [

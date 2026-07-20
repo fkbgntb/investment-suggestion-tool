@@ -704,6 +704,8 @@ class AnalysisRunRow(SnapshotMixin, Base):
     idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
     pipeline_version: Mapped[str] = mapped_column(String(120), nullable=False)
     prompt_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    rule_version: Mapped[str] = mapped_column(String(120), nullable=False, default="not-decided")
+    scoring_version: Mapped[str] = mapped_column(String(120), nullable=False, default="unknown")
     input_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
 
 

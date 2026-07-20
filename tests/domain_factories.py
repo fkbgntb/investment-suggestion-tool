@@ -114,6 +114,7 @@ def decision_result(label: SuggestionLabel = SuggestionLabel.HOLD) -> DecisionRe
         reasons=("模拟理由",),
         evidence_ids=("evidence-1",),
         reference_amount=money_range() if label is SuggestionLabel.SMALL_ADD else None,
+        allowed_labels=(label,),
         rule_version="rule-v1",
         decided_at=NOW,
     )

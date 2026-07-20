@@ -17,6 +17,18 @@ class RiskConstraints(DomainModel):
     maximum_position_loss_ratio: UnitInterval
     single_add_reference_range: MoneyRange | None = None
     long_horizon: bool
+    maximum_topic_weight: UnitInterval = Field(default=1)
+    target_topic_weight: UnitInterval = Field(default=1)
+    maximum_reduce_fraction: UnitInterval = Field(default=0)
+    minimum_holding_days_before_reduce: int = Field(default=0, ge=0, le=36_500)
+    maximum_purchase_fee_rate: UnitInterval = Field(default=1)
+    maximum_redemption_fee_rate: UnitInterval = Field(default=1)
+
+    @model_validator(mode="after")
+    def target_must_fit_within_maximum(self) -> RiskConstraints:
+        if self.target_topic_weight > self.maximum_topic_weight:
+            raise ValueError("target topic weight cannot exceed its maximum")
+        return self
 
 
 class PositionRiskSnapshot(DomainModel):
@@ -25,6 +37,10 @@ class PositionRiskSnapshot(DomainModel):
     unrealized_return_ratio: SignedRatio
     loss_boundary_used: UnitInterval
     recurring_contribution_active: bool
+    holding_period_days: int = Field(default=0, ge=0, le=36_500)
+    holding_period_data_complete: bool = False
+    purchase_fee_rate: UnitInterval | None = None
+    redemption_fee_rate: UnitInterval | None = None
     snapshot_at: AwareDatetime
 
 
@@ -61,6 +77,8 @@ class DecisionResult(DomainModel):
     reasons: tuple[str, ...] = Field(min_length=1, max_length=50)
     evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
     reference_amount: MoneyRange | None = None
+    reference_reduce_fraction: UnitInterval | None = None
+    allowed_labels: tuple[SuggestionLabel, ...] = Field(min_length=1, max_length=20)
     rule_version: str = Field(min_length=1, max_length=120)
     decided_at: AwareDatetime
     advisory_only: Literal[True] = True
@@ -72,8 +90,19 @@ class DecisionResult(DomainModel):
     def validate_reference_amount(self) -> DecisionResult:
         if self.reference_amount is not None and self.label is not SuggestionLabel.SMALL_ADD:
             raise ValueError("only SMALL_ADD may include an add amount reference")
+        if self.reference_reduce_fraction is not None and self.label not in {
+            SuggestionLabel.REDUCE,
+            SuggestionLabel.REBALANCE,
+        }:
+            raise ValueError("only REDUCE or REBALANCE may include a reduce fraction reference")
+        if self.reference_reduce_fraction == 0:
+            raise ValueError("a reduce fraction reference must be positive")
         if self.label is SuggestionLabel.INSUFFICIENT_DATA and self.strength != 0:
             raise ValueError("insufficient data must have zero suggestion strength")
+        if self.label not in self.allowed_labels:
+            raise ValueError("decision label must be inside the deterministic allowed set")
+        if len(set(self.allowed_labels)) != len(self.allowed_labels):
+            raise ValueError("allowed decision labels must be unique")
         return self
 
 
