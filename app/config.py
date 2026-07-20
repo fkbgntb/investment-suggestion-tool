@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     require_external_data_dir: bool = False
     allow_public_bind: bool = False
     collector_proxy_url: AnyHttpUrl | None = None
+    gdelt_max_records: int = Field(default=50, ge=1, le=250)
+    gdelt_max_documents_per_day: int = Field(default=500, ge=1, le=10_000)
     deepseek_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices("DEEPSEEK_API_KEY", "INVEST_DEEPSEEK_API_KEY"),

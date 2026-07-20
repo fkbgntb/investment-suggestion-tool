@@ -471,6 +471,53 @@
           "default": null,
           "title": "External Reference"
         },
+        "language": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Language"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "maxProperties": 100,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publisher"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
@@ -489,6 +536,32 @@
           "minLength": 1,
           "title": "Source Url",
           "type": "string"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "maxLength": 20000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
         }
       },
       "required": [
@@ -1294,6 +1367,14 @@
           "title": "Language",
           "type": "string"
         },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "maxProperties": 100,
+          "title": "Metadata",
+          "type": "object"
+        },
         "published_at": {
           "anyOf": [
             {
@@ -1359,7 +1440,9 @@
         "CONTENT_TYPE_REJECTED",
         "RESPONSE_TOO_LARGE",
         "NETWORK_ERROR",
-        "CIRCUIT_OPEN"
+        "CIRCUIT_OPEN",
+        "INVALID_RESPONSE",
+        "DAILY_LIMIT_REACHED"
       ],
       "title": "FetchErrorCode",
       "type": "string"
