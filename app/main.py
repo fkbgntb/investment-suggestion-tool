@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.router import api_router
+from app.collectors.registry import build_default_adapter_registry
 from app.config import Settings, get_settings
 from app.logging import configure_logging
 from app.security.headers import add_security_headers
@@ -31,6 +32,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     application.state.settings = resolved_settings
     application.state.database = database
+    application.state.adapter_registry = build_default_adapter_registry()
     application.middleware("http")(add_security_headers)
     application.include_router(api_router, prefix="/api/v1")
 

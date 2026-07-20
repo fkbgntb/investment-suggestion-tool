@@ -118,3 +118,14 @@ class SourceHealthSnapshot(DomainModel):
     last_success_at: AwareDatetime | None = None
     last_failure_at: AwareDatetime | None = None
     circuit_open_until: AwareDatetime | None = None
+
+
+class SourceAdapterState(DomainModel):
+    """Versioned, adapter-owned cursor state safe for optimistic updates."""
+
+    source_id: Identifier
+    adapter_name: Identifier
+    adapter_version: str = Field(min_length=1, max_length=64)
+    state_version: int = Field(default=0, ge=0)
+    cursor: str | None = Field(default=None, max_length=2_000)
+    updated_at: AwareDatetime

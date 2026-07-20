@@ -349,6 +349,50 @@ class SourceRow(SnapshotMixin, Base):
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
+class SourceAdapterStateRow(TimestampMixin, WorkspaceScopedMixin, Base):
+    __tablename__ = "source_adapter_states"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "source_id"],
+            ["sources.workspace_id", "sources.source_id"],
+            ondelete="CASCADE",
+            name="fk_source_adapter_states_workspace_source",
+        ),
+        UniqueConstraint(
+            "workspace_id", "source_id", name="uq_source_adapter_states_workspace_source"
+        ),
+        CheckConstraint("state_version >= 0", name="state_version_nonnegative"),
+    )
+
+    source_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    adapter_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    adapter_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    state_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    cursor: Mapped[str | None] = mapped_column(Text)
+
+
+class SourceHealthRow(TimestampMixin, WorkspaceScopedMixin, Base):
+    __tablename__ = "source_health"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "source_id"],
+            ["sources.workspace_id", "sources.source_id"],
+            ondelete="CASCADE",
+            name="fk_source_health_workspace_source",
+        ),
+        UniqueConstraint("workspace_id", "source_id", name="uq_source_health_workspace_source"),
+        CheckConstraint("consecutive_failures >= 0", name="consecutive_failures_nonnegative"),
+    )
+
+    source_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    consecutive_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error_code: Mapped[str | None] = mapped_column(String(64))
+    last_success_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    last_failure_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    circuit_open_until: Mapped[datetime | None] = mapped_column(UTCDateTime())
+
+
 class CrawlRunRow(SnapshotMixin, Base):
     __tablename__ = "crawl_runs"
     __table_args__ = (

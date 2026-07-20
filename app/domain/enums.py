@@ -64,12 +64,16 @@ class ExposureKind(StrEnum):
 
 
 class SourceKind(StrEnum):
+    OFFICIAL = "OFFICIAL"
     REGULATOR = "REGULATOR"
     FUND_MANAGER = "FUND_MANAGER"
     COMPANY_OFFICIAL = "COMPANY_OFFICIAL"
+    AGGREGATOR = "AGGREGATOR"
+    MEDIA = "MEDIA"
     RESEARCH = "RESEARCH"
     NEWS = "NEWS"
     MARKET_DATA = "MARKET_DATA"
+    SOCIAL = "SOCIAL"
     COMMUNITY = "COMMUNITY"
 
 
@@ -91,9 +95,11 @@ class FetchErrorCode(StrEnum):
 
 
 class SourceHealthStatus(StrEnum):
+    UNKNOWN = "UNKNOWN"
     HEALTHY = "HEALTHY"
     DEGRADED = "DEGRADED"
     CIRCUIT_OPEN = "CIRCUIT_OPEN"
+    DISABLED = "DISABLED"
 
 
 class TrustTier(StrEnum):
