@@ -3387,6 +3387,152 @@
       "title": "PurchaseLot",
       "type": "object"
     },
+    "QualityMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "ai_extraction_run_count": {
+          "minimum": 0,
+          "title": "Ai Extraction Run Count",
+          "type": "integer"
+        },
+        "ai_schema_failure_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Ai Schema Failure Ratio"
+        },
+        "analysis_input_tokens": {
+          "minimum": 0,
+          "title": "Analysis Input Tokens",
+          "type": "integer"
+        },
+        "analysis_output_tokens": {
+          "minimum": 0,
+          "title": "Analysis Output Tokens",
+          "type": "integer"
+        },
+        "crawl_run_count": {
+          "minimum": 0,
+          "title": "Crawl Run Count",
+          "type": "integer"
+        },
+        "duplicate_document_count": {
+          "minimum": 0,
+          "title": "Duplicate Document Count",
+          "type": "integer"
+        },
+        "duplicate_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Duplicate Ratio"
+        },
+        "estimated_cost_cny": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Cost Cny"
+        },
+        "evaluated_at": {
+          "format": "date-time",
+          "title": "Evaluated At",
+          "type": "string"
+        },
+        "irrelevant_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Irrelevant Ratio"
+        },
+        "metric_version": {
+          "const": "quality-metrics-1.0.0",
+          "default": "quality-metrics-1.0.0",
+          "title": "Metric Version",
+          "type": "string"
+        },
+        "raw_document_count": {
+          "minimum": 0,
+          "title": "Raw Document Count",
+          "type": "integer"
+        },
+        "relevance_assessment_count": {
+          "minimum": 0,
+          "title": "Relevance Assessment Count",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_failure_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Source Failure Ratio"
+        }
+      },
+      "required": [
+        "evaluated_at",
+        "raw_document_count",
+        "relevance_assessment_count",
+        "duplicate_document_count",
+        "crawl_run_count",
+        "ai_extraction_run_count",
+        "irrelevant_ratio",
+        "duplicate_ratio",
+        "source_failure_ratio",
+        "ai_schema_failure_ratio",
+        "analysis_input_tokens",
+        "analysis_output_tokens"
+      ],
+      "title": "QualityMetrics",
+      "type": "object"
+    },
     "RawDocument": {
       "additionalProperties": false,
       "description": "Aggregate whose shape makes the trust boundary explicit.",
@@ -4209,6 +4355,164 @@
         "long_horizon"
       ],
       "title": "RiskConstraints",
+      "type": "object"
+    },
+    "ShadowRunRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "advisory_only": {
+          "const": true,
+          "default": true,
+          "title": "Advisory Only",
+          "type": "boolean"
+        },
+        "change_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Change Reasons",
+          "type": "array"
+        },
+        "decision_changed": {
+          "title": "Decision Changed",
+          "type": "boolean"
+        },
+        "decision_label": {
+          "$ref": "#/$defs/SuggestionLabel"
+        },
+        "evidence_count": {
+          "minimum": 0,
+          "title": "Evidence Count",
+          "type": "integer"
+        },
+        "failed_source_count": {
+          "minimum": 0,
+          "title": "Failed Source Count",
+          "type": "integer"
+        },
+        "finished_at": {
+          "format": "date-time",
+          "title": "Finished At",
+          "type": "string"
+        },
+        "metrics": {
+          "$ref": "#/$defs/QualityMetrics"
+        },
+        "model_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Model Version",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "position_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Position Id",
+          "type": "string"
+        },
+        "previous_report_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Report Id"
+        },
+        "prompt_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "provider_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Provider Name",
+          "type": "string"
+        },
+        "record_version": {
+          "const": "shadow-run-1.0.0",
+          "default": "shadow-run-1.0.0",
+          "title": "Record Version",
+          "type": "string"
+        },
+        "report_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "shadow_run_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Shadow Run Id",
+          "type": "string"
+        },
+        "started_at": {
+          "format": "date-time",
+          "title": "Started At",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "SUCCEEDED",
+            "DEGRADED"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "shadow_run_id",
+        "started_at",
+        "finished_at",
+        "position_id",
+        "report_id",
+        "decision_label",
+        "decision_changed",
+        "change_reasons",
+        "evidence_count",
+        "failed_source_count",
+        "provider_name",
+        "model_version",
+        "prompt_version",
+        "rule_version",
+        "pipeline_version",
+        "metrics",
+        "status"
+      ],
+      "title": "ShadowRunRecord",
       "type": "object"
     },
     "Source": {
@@ -5432,6 +5736,9 @@
     "purchase_lot": {
       "$ref": "#/$defs/PurchaseLot"
     },
+    "quality_metrics": {
+      "$ref": "#/$defs/QualityMetrics"
+    },
     "raw_document": {
       "$ref": "#/$defs/RawDocument"
     },
@@ -5464,6 +5771,9 @@
       "default": "1.0",
       "title": "Schema Version",
       "type": "string"
+    },
+    "shadow_run_record": {
+      "$ref": "#/$defs/ShadowRunRecord"
     },
     "source": {
       "$ref": "#/$defs/Source"
@@ -5532,6 +5842,8 @@
     "position_analysis_snapshot",
     "portfolio_ai_risk_summary",
     "market_snapshot",
+    "quality_metrics",
+    "shadow_run_record",
     "topic",
     "entity",
     "influence_relation",
