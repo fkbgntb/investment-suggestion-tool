@@ -268,6 +268,74 @@ class ExposureRow(SnapshotMixin, Base):
     config_version: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class TaxonomyConfigurationRow(WorkspaceScopedMixin, Base):
+    __tablename__ = "taxonomy_configurations"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "configuration_id",
+            name="uq_taxonomy_configurations_workspace_configuration",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "config_version",
+            name="uq_taxonomy_configurations_workspace_version",
+        ),
+        Index(
+            "ix_taxonomy_configurations_workspace_created",
+            "workspace_id",
+            "created_at",
+        ),
+    )
+
+    configuration_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    config_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(32), nullable=False, default="1.0")
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
+class ActiveTaxonomyConfigurationRow(TimestampMixin, WorkspaceScopedMixin, Base):
+    __tablename__ = "active_taxonomy_configurations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "configuration_id"],
+            [
+                "taxonomy_configurations.workspace_id",
+                "taxonomy_configurations.configuration_id",
+            ],
+            ondelete="CASCADE",
+            name="fk_active_taxonomy_workspace_configuration",
+        ),
+    )
+
+    workspace_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("workspaces.workspace_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    configuration_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    config_version: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ImmutableTaxonomyConfigurationError(RuntimeError):
+    """Published taxonomy configuration payloads are append-only."""
+
+
+@event.listens_for(Session, "before_flush")
+def _protect_taxonomy_configurations(
+    session: Session, _flush_context: object, _instances: object
+) -> None:
+    if any(isinstance(row, TaxonomyConfigurationRow) for row in session.dirty):
+        raise ImmutableTaxonomyConfigurationError(
+            "published taxonomy configurations cannot be updated"
+        )
+    if any(isinstance(row, TaxonomyConfigurationRow) for row in session.deleted):
+        raise ImmutableTaxonomyConfigurationError(
+            "published taxonomy configurations cannot be deleted directly"
+        )
+
+
 class SourceRow(SnapshotMixin, Base):
     __tablename__ = "sources"
     __table_args__ = (

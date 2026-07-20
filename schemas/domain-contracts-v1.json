@@ -574,6 +574,18 @@
           "title": "Aliases",
           "type": "array"
         },
+        "config_version": {
+          "default": "unversioned",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
         "entity_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -1149,6 +1161,15 @@
           "title": "Config Version",
           "type": "string"
         },
+        "data_status": {
+          "$ref": "#/$defs/ExposureDataStatus",
+          "default": "UNKNOWN"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
         "entity_id": {
           "anyOf": [
             {
@@ -1203,8 +1224,12 @@
             {
               "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
               "type": "string"
+            },
+            {
+              "type": "null"
             }
           ],
+          "default": null,
           "title": "Weight"
         }
       },
@@ -1213,12 +1238,20 @@
         "asset_id",
         "topic_id",
         "kind",
-        "weight",
         "rationale",
         "config_version"
       ],
       "title": "Exposure",
       "type": "object"
+    },
+    "ExposureDataStatus": {
+      "enum": [
+        "UNKNOWN",
+        "HEURISTIC",
+        "OFFICIAL_VERIFIED"
+      ],
+      "title": "ExposureDataStatus",
+      "type": "string"
     },
     "ExposureKind": {
       "enum": [
@@ -1443,6 +1476,90 @@
         "payload_sha256"
       ],
       "title": "IdempotencyKey",
+      "type": "object"
+    },
+    "InfluenceDirection": {
+      "enum": [
+        "POSITIVE",
+        "NEGATIVE",
+        "MIXED",
+        "CONTEXT_DEPENDENT"
+      ],
+      "title": "InfluenceDirection",
+      "type": "string"
+    },
+    "InfluenceRelation": {
+      "additionalProperties": false,
+      "properties": {
+        "config_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/InfluenceDirection"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/ExposureKind"
+        },
+        "rationale": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "relation_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Relation Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_kind": {
+          "$ref": "#/$defs/TaxonomyNodeKind"
+        },
+        "target_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "target_kind": {
+          "$ref": "#/$defs/TaxonomyNodeKind"
+        }
+      },
+      "required": [
+        "relation_id",
+        "source_kind",
+        "source_id",
+        "target_kind",
+        "target_id",
+        "kind",
+        "direction",
+        "rationale",
+        "config_version"
+      ],
+      "title": "InfluenceRelation",
       "type": "object"
     },
     "InvestmentProfile": {
@@ -3260,6 +3377,105 @@
       "title": "TaskRequest",
       "type": "object"
     },
+    "TaxonomyConfiguration": {
+      "additionalProperties": false,
+      "description": "An immutable, complete configuration version published by a trusted local actor.",
+      "properties": {
+        "based_on_version": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Based On Version"
+        },
+        "config_version": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "configuration_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "entities": {
+          "items": {
+            "$ref": "#/$defs/Entity"
+          },
+          "maxItems": 2000,
+          "title": "Entities",
+          "type": "array"
+        },
+        "exposures": {
+          "items": {
+            "$ref": "#/$defs/Exposure"
+          },
+          "maxItems": 5000,
+          "title": "Exposures",
+          "type": "array"
+        },
+        "influence_relations": {
+          "items": {
+            "$ref": "#/$defs/InfluenceRelation"
+          },
+          "maxItems": 5000,
+          "title": "Influence Relations",
+          "type": "array"
+        },
+        "name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "topics": {
+          "items": {
+            "$ref": "#/$defs/Topic"
+          },
+          "maxItems": 500,
+          "minItems": 1,
+          "title": "Topics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "configuration_id",
+        "config_version",
+        "name",
+        "topics",
+        "created_at"
+      ],
+      "title": "TaxonomyConfiguration",
+      "type": "object"
+    },
+    "TaxonomyNodeKind": {
+      "enum": [
+        "TOPIC",
+        "ENTITY"
+      ],
+      "title": "TaxonomyNodeKind",
+      "type": "string"
+    },
     "Topic": {
       "additionalProperties": false,
       "properties": {
@@ -3270,6 +3486,10 @@
           "maxItems": 100,
           "title": "Aliases",
           "type": "array"
+        },
+        "category": {
+          "$ref": "#/$defs/TopicCategory",
+          "default": "THEME"
         },
         "config_version": {
           "maxLength": 64,
@@ -3296,6 +3516,21 @@
           "title": "Name",
           "type": "string"
         },
+        "parent_topic_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Topic Id"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
@@ -3317,6 +3552,15 @@
       ],
       "title": "Topic",
       "type": "object"
+    },
+    "TopicCategory": {
+      "enum": [
+        "THEME",
+        "SUBTHEME",
+        "END_MARKET"
+      ],
+      "title": "TopicCategory",
+      "type": "string"
     },
     "TransitionOutcome": {
       "enum": [
@@ -3399,6 +3643,9 @@
     },
     "idempotency_key": {
       "$ref": "#/$defs/IdempotencyKey"
+    },
+    "influence_relation": {
+      "$ref": "#/$defs/InfluenceRelation"
     },
     "investment_profile": {
       "$ref": "#/$defs/InvestmentProfile"
@@ -3493,6 +3740,9 @@
     "task_request": {
       "$ref": "#/$defs/TaskRequest"
     },
+    "taxonomy_configuration": {
+      "$ref": "#/$defs/TaxonomyConfiguration"
+    },
     "topic": {
       "$ref": "#/$defs/Topic"
     }
@@ -3512,7 +3762,9 @@
     "market_snapshot",
     "topic",
     "entity",
+    "influence_relation",
     "exposure",
+    "taxonomy_configuration",
     "source",
     "external_document_content",
     "raw_document_control",

@@ -17,8 +17,9 @@ from app.domain.documents import RawDocument
 from app.domain.enums import TransitionOutcome
 from app.domain.portfolio import Asset, InvestmentProfile, Position, PositionAnalysisSnapshot
 from app.domain.state_machine import StateTransitionRecord
-from app.domain.taxonomy import Source
+from app.domain.taxonomy import Source, TaxonomyConfiguration
 from app.storage.models import (
+    ActiveTaxonomyConfigurationRow,
     AssetRow,
     AuditEventRow,
     CrawlRunRow,
@@ -27,6 +28,7 @@ from app.storage.models import (
     PositionSnapshotRow,
     RawDocumentRow,
     SourceRow,
+    TaxonomyConfigurationRow,
     WorkspaceRow,
     utc_now,
 )
@@ -313,6 +315,88 @@ class PortfolioRepository:
             )
         )
         return PositionAnalysisSnapshot.model_validate(row.payload) if row is not None else None
+
+
+class TaxonomyRepository:
+    """Persist complete, immutable taxonomy versions and a separate active pointer."""
+
+    def __init__(self, session: Session, workspace_id: str) -> None:
+        self.session = session
+        self.workspace_id = workspace_id
+
+    def add_configuration(self, configuration: TaxonomyConfiguration) -> TaxonomyConfigurationRow:
+        row = TaxonomyConfigurationRow(
+            configuration_id=configuration.configuration_id,
+            workspace_id=self.workspace_id,
+            config_version=configuration.config_version,
+            schema_version=configuration.schema_version,
+            payload=configuration.model_dump(mode="json"),
+            created_at=configuration.created_at,
+        )
+        self.session.add(row)
+        self.session.flush()
+        return row
+
+    def get_by_version(self, config_version: str) -> TaxonomyConfiguration | None:
+        row = self.session.scalar(
+            select(TaxonomyConfigurationRow).where(
+                TaxonomyConfigurationRow.workspace_id == self.workspace_id,
+                TaxonomyConfigurationRow.config_version == config_version,
+            )
+        )
+        return TaxonomyConfiguration.model_validate(row.payload) if row is not None else None
+
+    def get_by_id(self, configuration_id: str) -> TaxonomyConfiguration | None:
+        row = self.session.scalar(
+            select(TaxonomyConfigurationRow).where(
+                TaxonomyConfigurationRow.workspace_id == self.workspace_id,
+                TaxonomyConfigurationRow.configuration_id == configuration_id,
+            )
+        )
+        return TaxonomyConfiguration.model_validate(row.payload) if row is not None else None
+
+    def list_configurations(self) -> tuple[TaxonomyConfiguration, ...]:
+        rows = self.session.scalars(
+            select(TaxonomyConfigurationRow)
+            .where(TaxonomyConfigurationRow.workspace_id == self.workspace_id)
+            .order_by(TaxonomyConfigurationRow.created_at.desc())
+        )
+        return tuple(TaxonomyConfiguration.model_validate(row.payload) for row in rows)
+
+    def get_active(self) -> TaxonomyConfiguration | None:
+        statement = (
+            select(TaxonomyConfigurationRow)
+            .join(
+                ActiveTaxonomyConfigurationRow,
+                (
+                    ActiveTaxonomyConfigurationRow.workspace_id
+                    == TaxonomyConfigurationRow.workspace_id
+                )
+                & (
+                    ActiveTaxonomyConfigurationRow.configuration_id
+                    == TaxonomyConfigurationRow.configuration_id
+                ),
+            )
+            .where(ActiveTaxonomyConfigurationRow.workspace_id == self.workspace_id)
+        )
+        row = self.session.scalar(statement)
+        return TaxonomyConfiguration.model_validate(row.payload) if row is not None else None
+
+    def activate(self, configuration: TaxonomyConfiguration) -> None:
+        current = self.session.get(ActiveTaxonomyConfigurationRow, self.workspace_id)
+        if current is None:
+            self.session.add(
+                ActiveTaxonomyConfigurationRow(
+                    workspace_id=self.workspace_id,
+                    configuration_id=configuration.configuration_id,
+                    config_version=configuration.config_version,
+                )
+            )
+        else:
+            current.configuration_id = configuration.configuration_id
+            current.config_version = configuration.config_version
+            current.updated_at = utc_now()
+        self.session.flush()
 
 
 class SourceRepository:
