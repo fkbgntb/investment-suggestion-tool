@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "sec-company-filings",
+  "name": "U.S. SEC EDGAR company submissions",
+  "kind": "REGULATOR",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://data.sec.gov/submissions/",
+  "regions": ["us", "global-issuers"],
+  "languages": ["en"],
+  "enabled": true,
+  "adapter_name": "sec-submissions",
+  "crawl_interval_hours": 3,
+  "allow_fulltext": true,
+  "allowed_domains": ["data.sec.gov", "www.sec.gov"],
+  "terms_url": "https://www.sec.gov/about/webmaster-frequently-asked-questions",
+  "config_version": "1.0"
+}
