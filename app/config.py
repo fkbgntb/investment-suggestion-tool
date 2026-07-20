@@ -1,6 +1,7 @@
 """Typed application configuration with secure defaults."""
 
 import os
+from decimal import Decimal
 from functools import lru_cache
 from ipaddress import ip_address
 from pathlib import Path
@@ -52,6 +53,7 @@ class Settings(BaseSettings):
         max_length=128,
         pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
     )
+    portfolio_reference_value: Decimal | None = Field(default=None, gt=0, decimal_places=2)
     raw_document_retention_days: int = Field(default=90, ge=1, le=3650)
     require_external_data_dir: bool = False
     allow_public_bind: bool = False
