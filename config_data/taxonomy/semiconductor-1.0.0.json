@@ -1,0 +1,161 @@
+{
+  "configuration_id": "taxonomy-semiconductor-1.0.0",
+  "config_version": "semiconductor-1.0.0",
+  "name": "半导体主题基础配置",
+  "created_at": "2026-07-20T00:00:00+08:00",
+  "based_on_version": null,
+  "topics": [
+    {
+      "topic_id": "semiconductor",
+      "name": "半导体",
+      "category": "THEME",
+      "aliases": ["芯片", "semiconductor", "chip industry"],
+      "keywords": ["半导体", "芯片", "晶圆", "semiconductor", "chip", "wafer"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.memory",
+      "name": "存储",
+      "category": "SUBTHEME",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["存储芯片", "memory semiconductor"],
+      "keywords": ["DRAM", "NAND", "HBM", "memory chip", "存储价格"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.wafer",
+      "name": "晶圆",
+      "category": "SUBTHEME",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["晶圆材料", "wafer"],
+      "keywords": ["silicon wafer", "晶圆厂", "硅片", "wafer capacity"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.equipment",
+      "name": "半导体设备",
+      "category": "SUBTHEME",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["芯片设备", "semiconductor equipment"],
+      "keywords": ["光刻", "刻蚀", "薄膜沉积", "lithography", "etch", "deposition"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.design",
+      "name": "芯片设计",
+      "category": "SUBTHEME",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["集成电路设计", "fabless"],
+      "keywords": ["GPU", "CPU", "ASIC", "SoC", "chip design", "fabless"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.foundry",
+      "name": "晶圆代工",
+      "category": "SUBTHEME",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["芯片代工", "foundry"],
+      "keywords": ["晶圆代工", "foundry", "产能利用率", "先进制程", "process node"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.end.smartphone",
+      "name": "手机终端",
+      "category": "END_MARKET",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["智能手机", "smartphone"],
+      "keywords": ["手机销量", "smartphone shipments", "消费电子"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.end.pc",
+      "name": "PC终端",
+      "category": "END_MARKET",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["个人电脑", "personal computer"],
+      "keywords": ["PC shipments", "电脑销量", "notebook", "desktop PC"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.end.server",
+      "name": "服务器终端",
+      "category": "END_MARKET",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["数据中心", "server and data center"],
+      "keywords": ["server demand", "data center", "AI server", "服务器需求"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    },
+    {
+      "topic_id": "semiconductor.end.automotive",
+      "name": "汽车终端",
+      "category": "END_MARKET",
+      "parent_topic_id": "semiconductor",
+      "aliases": ["汽车芯片", "automotive semiconductor"],
+      "keywords": ["automotive chip", "汽车销量", "功率半导体", "ADAS"],
+      "enabled": true,
+      "config_version": "semiconductor-1.0.0"
+    }
+  ],
+  "entities": [
+    {"entity_id": "commodity.copper", "name": "铜", "entity_type": "COMMODITY", "aliases": ["copper", "铜价"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "commodity.silicon", "name": "硅", "entity_type": "COMMODITY", "aliases": ["silicon", "硅材料"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "index.csi-semiconductor", "name": "中证全指半导体产品与设备指数", "entity_type": "INDEX", "aliases": ["中证全指半导体指数"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "product.512480", "name": "国联安中证全指半导体产品与设备ETF", "entity_type": "PRODUCT", "aliases": ["512480", "半导体ETF"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.samsung-electronics", "name": "Samsung Electronics", "entity_type": "COMPANY", "aliases": ["三星电子", "Samsung"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.sk-hynix", "name": "SK hynix", "entity_type": "COMPANY", "aliases": ["SK海力士", "Hynix"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.micron", "name": "Micron Technology", "entity_type": "COMPANY", "aliases": ["美光科技", "Micron"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.tsmc", "name": "TSMC", "entity_type": "COMPANY", "aliases": ["台积电", "Taiwan Semiconductor Manufacturing"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.smic", "name": "SMIC", "entity_type": "COMPANY", "aliases": ["中芯国际", "Semiconductor Manufacturing International"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.asml", "name": "ASML", "entity_type": "COMPANY", "aliases": ["阿斯麦"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.applied-materials", "name": "Applied Materials", "entity_type": "COMPANY", "aliases": ["应用材料"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.lam-research", "name": "Lam Research", "entity_type": "COMPANY", "aliases": ["泛林集团"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.naura", "name": "北方华创", "entity_type": "COMPANY", "aliases": ["NAURA Technology"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.nvidia", "name": "NVIDIA", "entity_type": "COMPANY", "aliases": ["英伟达"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.amd", "name": "AMD", "entity_type": "COMPANY", "aliases": ["超威半导体", "Advanced Micro Devices"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "company.broadcom", "name": "Broadcom", "entity_type": "COMPANY", "aliases": ["博通"], "enabled": true, "config_version": "semiconductor-1.0.0"}
+  ],
+  "influence_relations": [
+    {"relation_id": "relation.memory-to-semiconductor", "source_kind": "TOPIC", "source_id": "semiconductor.memory", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "存储价格、库存和供需周期会影响半导体行业景气，但影响方向取决于价格与需求的组合。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.wafer-to-semiconductor", "source_kind": "TOPIC", "source_id": "semiconductor.wafer", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "UPSTREAM", "direction": "CONTEXT_DEPENDENT", "rationale": "晶圆材料和产能是半导体制造的上游约束。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.equipment-to-semiconductor", "source_kind": "TOPIC", "source_id": "semiconductor.equipment", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "UPSTREAM", "direction": "CONTEXT_DEPENDENT", "rationale": "设备订单、交付和资本开支反映制造扩产和技术升级。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.design-to-semiconductor", "source_kind": "TOPIC", "source_id": "semiconductor.design", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "设计公司需求和产品周期是行业重要信号。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.foundry-to-semiconductor", "source_kind": "TOPIC", "source_id": "semiconductor.foundry", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "代工产能利用率、制程进度与资本开支影响产业链预期。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.smartphone-demand", "source_kind": "TOPIC", "source_id": "semiconductor.end.smartphone", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DEMAND_DRIVER", "direction": "POSITIVE", "rationale": "手机销量通常影响消费电子芯片需求，但不能单独决定基金方向。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.pc-demand", "source_kind": "TOPIC", "source_id": "semiconductor.end.pc", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DEMAND_DRIVER", "direction": "POSITIVE", "rationale": "PC出货量通常影响处理器和存储需求。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.server-demand", "source_kind": "TOPIC", "source_id": "semiconductor.end.server", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DEMAND_DRIVER", "direction": "POSITIVE", "rationale": "服务器和数据中心投资通常影响高性能计算与存储需求。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.automotive-demand", "source_kind": "TOPIC", "source_id": "semiconductor.end.automotive", "target_kind": "TOPIC", "target_id": "semiconductor", "kind": "DEMAND_DRIVER", "direction": "POSITIVE", "rationale": "汽车电子化通常提升功率、模拟和控制芯片需求。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.copper-smartphone-cost", "source_kind": "ENTITY", "source_id": "commodity.copper", "target_kind": "TOPIC", "target_id": "semiconductor.end.smartphone", "kind": "INPUT_COST", "direction": "NEGATIVE", "rationale": "铜价上涨可能抬升终端物料成本，但实际影响需结合企业定价与需求验证。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.silicon-wafer-cost", "source_kind": "ENTITY", "source_id": "commodity.silicon", "target_kind": "TOPIC", "target_id": "semiconductor.wafer", "kind": "INPUT_COST", "direction": "CONTEXT_DEPENDENT", "rationale": "硅材料价格和供应可能影响晶圆成本与供给。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.samsung-memory", "source_kind": "ENTITY", "source_id": "company.samsung-electronics", "target_kind": "TOPIC", "target_id": "semiconductor.memory", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "三星电子仅作为全球存储行业代表性公司信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.hynix-memory", "source_kind": "ENTITY", "source_id": "company.sk-hynix", "target_kind": "TOPIC", "target_id": "semiconductor.memory", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "SK海力士仅作为全球存储行业代表性公司信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.micron-memory", "source_kind": "ENTITY", "source_id": "company.micron", "target_kind": "TOPIC", "target_id": "semiconductor.memory", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "美光科技仅作为全球存储行业代表性公司信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.tsmc-foundry", "source_kind": "ENTITY", "source_id": "company.tsmc", "target_kind": "TOPIC", "target_id": "semiconductor.foundry", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "台积电仅作为全球代工行业信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.smic-foundry", "source_kind": "ENTITY", "source_id": "company.smic", "target_kind": "TOPIC", "target_id": "semiconductor.foundry", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "中芯国际作为代工行业代表性公司用于关联正式披露。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.asml-equipment", "source_kind": "ENTITY", "source_id": "company.asml", "target_kind": "TOPIC", "target_id": "semiconductor.equipment", "kind": "UPSTREAM", "direction": "CONTEXT_DEPENDENT", "rationale": "ASML仅作为全球设备行业信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.applied-equipment", "source_kind": "ENTITY", "source_id": "company.applied-materials", "target_kind": "TOPIC", "target_id": "semiconductor.equipment", "kind": "UPSTREAM", "direction": "CONTEXT_DEPENDENT", "rationale": "应用材料仅作为全球设备行业信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.lam-equipment", "source_kind": "ENTITY", "source_id": "company.lam-research", "target_kind": "TOPIC", "target_id": "semiconductor.equipment", "kind": "UPSTREAM", "direction": "CONTEXT_DEPENDENT", "rationale": "泛林集团仅作为全球设备行业信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.naura-equipment", "source_kind": "ENTITY", "source_id": "company.naura", "target_kind": "TOPIC", "target_id": "semiconductor.equipment", "kind": "UPSTREAM", "direction": "CONTEXT_DEPENDENT", "rationale": "北方华创作为国内设备产业链代表性公司用于关联公开信息。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.nvidia-design", "source_kind": "ENTITY", "source_id": "company.nvidia", "target_kind": "TOPIC", "target_id": "semiconductor.design", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "英伟达仅作为全球设计与AI芯片需求信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.amd-design", "source_kind": "ENTITY", "source_id": "company.amd", "target_kind": "TOPIC", "target_id": "semiconductor.design", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "AMD仅作为全球芯片设计行业信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"relation_id": "relation.broadcom-design", "source_kind": "ENTITY", "source_id": "company.broadcom", "target_kind": "TOPIC", "target_id": "semiconductor.design", "kind": "DIRECT", "direction": "CONTEXT_DEPENDENT", "rationale": "博通仅作为全球芯片设计行业信号，不表示本基金持有该公司。", "enabled": true, "config_version": "semiconductor-1.0.0"}
+  ],
+  "exposures": [
+    {"exposure_id": "exposure.007300.semiconductor", "asset_id": "asset-007300", "topic_id": "semiconductor", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "007300跟踪半导体产品与设备主题；此关系不表示精确持仓权重。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.index", "asset_id": "asset-007300", "topic_id": "semiconductor", "entity_id": "index.csi-semiconductor", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "007300跟踪中证全指半导体产品与设备指数；权重等待官方成分数据。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.target-etf", "asset_id": "asset-007300", "topic_id": "semiconductor", "entity_id": "product.512480", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "007300是目标ETF 512480的联接基金；具体投资比例等待官方定期报告。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.memory", "asset_id": "asset-007300", "topic_id": "semiconductor.memory", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "存储是半导体主题相关子行业信号，不表示007300的精确持仓权重。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.wafer", "asset_id": "asset-007300", "topic_id": "semiconductor.wafer", "kind": "UPSTREAM", "weight": null, "data_status": "UNKNOWN", "rationale": "晶圆是半导体上游信号，不表示007300的精确持仓权重。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.equipment", "asset_id": "asset-007300", "topic_id": "semiconductor.equipment", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "设备是目标指数明确主题之一，但此处不虚构具体权重。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.design", "asset_id": "asset-007300", "topic_id": "semiconductor.design", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "芯片设计是行业相关信号，不表示007300的精确持仓权重。", "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"exposure_id": "exposure.007300.foundry", "asset_id": "asset-007300", "topic_id": "semiconductor.foundry", "kind": "DIRECT", "weight": null, "data_status": "UNKNOWN", "rationale": "晶圆代工是行业相关信号，不表示007300的精确持仓权重。", "enabled": true, "config_version": "semiconductor-1.0.0"}
+  ]
+}

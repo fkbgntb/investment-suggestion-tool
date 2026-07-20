@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from typing import Annotated
-from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel
@@ -18,12 +17,12 @@ from app.domain.portfolio import (
     Position,
     PositionAnalysisSnapshot,
 )
+from app.security.local_access import require_local_access
 from app.services.portfolio import (
     PortfolioConflict,
     PortfolioNotFound,
     PortfolioService,
     identify_asset_type,
-    is_loopback_client,
 )
 from app.storage.database import Database
 
@@ -38,24 +37,6 @@ class AssetClassificationRequest(BaseModel):
 
 class AssetClassificationResponse(BaseModel):
     asset_type: AssetType
-
-
-def require_local_portfolio_access(request: Request) -> None:
-    settings: Settings = request.app.state.settings
-    if not is_loopback_client(settings.host):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="portfolio API is disabled when the service has a public bind address",
-        )
-    client_host = request.client.host if request.client is not None else None
-    if not is_loopback_client(client_host):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="local access only")
-    origin = request.headers.get("origin")
-    if origin is not None and not is_loopback_client(urlsplit(origin).hostname):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="cross-origin portfolio access is forbidden",
-        )
 
 
 def portfolio_service(request: Request) -> Iterator[PortfolioService]:
@@ -79,7 +60,7 @@ def _conflict(error: PortfolioConflict) -> HTTPException:
 @router.post(
     "/classify-asset",
     response_model=AssetClassificationResponse,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def classify_asset(request: AssetClassificationRequest) -> AssetClassificationResponse:
     try:
@@ -95,7 +76,7 @@ def classify_asset(request: AssetClassificationRequest) -> AssetClassificationRe
     "/profiles",
     response_model=InvestmentProfile,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def create_profile(
     profile: InvestmentProfile,
@@ -110,7 +91,7 @@ def create_profile(
 @router.get(
     "/profiles",
     response_model=list[InvestmentProfile],
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def list_profiles(
     service: PortfolioServiceDependency,
@@ -121,7 +102,7 @@ def list_profiles(
 @router.put(
     "/profiles/{profile_id}",
     response_model=InvestmentProfile,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def update_profile(
     profile_id: str,
@@ -142,7 +123,7 @@ def update_profile(
     "/assets",
     response_model=Asset,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def create_asset(
     asset: Asset,
@@ -157,7 +138,7 @@ def create_asset(
 @router.get(
     "/assets",
     response_model=list[Asset],
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def list_assets(service: PortfolioServiceDependency) -> tuple[Asset, ...]:
     return service.list_assets()
@@ -166,7 +147,7 @@ def list_assets(service: PortfolioServiceDependency) -> tuple[Asset, ...]:
 @router.put(
     "/assets/{asset_id}",
     response_model=Asset,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def update_asset(
     asset_id: str,
@@ -189,7 +170,7 @@ def update_asset(
     "/positions",
     response_model=Position,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def create_position(
     position: Position,
@@ -204,7 +185,7 @@ def create_position(
 @router.get(
     "/positions",
     response_model=list[Position],
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def list_positions(service: PortfolioServiceDependency) -> tuple[Position, ...]:
     return service.list_positions()
@@ -213,7 +194,7 @@ def list_positions(service: PortfolioServiceDependency) -> tuple[Position, ...]:
 @router.get(
     "/positions/{position_id}",
     response_model=Position,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def get_position(
     position_id: str,
@@ -228,7 +209,7 @@ def get_position(
 @router.put(
     "/positions/{position_id}",
     response_model=Position,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def update_position(
     position_id: str,
@@ -250,7 +231,7 @@ def update_position(
 @router.delete(
     "/positions/{position_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def delete_position(
     position_id: str,
@@ -267,7 +248,7 @@ def delete_position(
     "/positions/{position_id}/analysis-snapshots",
     response_model=PositionAnalysisSnapshot,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def create_analysis_snapshot(
     position_id: str,
@@ -282,7 +263,7 @@ def create_analysis_snapshot(
 @router.get(
     "/analysis-snapshots/{snapshot_id}/ai-risk-summary",
     response_model=PortfolioAIRiskSummary,
-    dependencies=[Depends(require_local_portfolio_access)],
+    dependencies=[Depends(require_local_access)],
 )
 def get_ai_risk_summary(
     snapshot_id: str,

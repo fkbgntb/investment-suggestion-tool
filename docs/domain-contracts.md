@@ -21,7 +21,7 @@
 | 分类 | 对象 |
 | --- | --- |
 | 投资与行情 | `InvestmentProfile`、`Asset`、`Position`、`MarketSnapshot` |
-| 主题配置 | `Topic`、`Entity`、`Exposure`、`Source` |
+| 主题配置 | `Topic`、`Entity`、`InfluenceRelation`、`Exposure`、`TaxonomyConfiguration`、`Source` |
 | 文档 | `RawDocument`、`EventCluster` |
 | 证据 | `Evidence`、`EvidenceScore` |
 | 分析建议 | `DecisionContext`、`DecisionResult`、`AnalysisResult`、`Report` |

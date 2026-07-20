@@ -31,6 +31,30 @@ class EntityType(StrEnum):
     REGION = "REGION"
 
 
+class TopicCategory(StrEnum):
+    THEME = "THEME"
+    SUBTHEME = "SUBTHEME"
+    END_MARKET = "END_MARKET"
+
+
+class TaxonomyNodeKind(StrEnum):
+    TOPIC = "TOPIC"
+    ENTITY = "ENTITY"
+
+
+class InfluenceDirection(StrEnum):
+    POSITIVE = "POSITIVE"
+    NEGATIVE = "NEGATIVE"
+    MIXED = "MIXED"
+    CONTEXT_DEPENDENT = "CONTEXT_DEPENDENT"
+
+
+class ExposureDataStatus(StrEnum):
+    UNKNOWN = "UNKNOWN"
+    HEURISTIC = "HEURISTIC"
+    OFFICIAL_VERIFIED = "OFFICIAL_VERIFIED"
+
+
 class ExposureKind(StrEnum):
     DIRECT = "DIRECT"
     UPSTREAM = "UPSTREAM"

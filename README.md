@@ -13,8 +13,10 @@
 - [x] 步骤 2：版本化领域模型、模块接口、状态机和 JSON Schema
 - [x] 步骤 3：数据库、迁移、保留策略、审计和加密备份
 - [x] 步骤 4：投资档案、持仓 CRUD、费用字段和不可变分析快照
+- [x] 步骤 5：版本化 Topic、Entity、影响关系和基金 Exposure 配置
 
-步骤 4 完成后，应用可以在本机录入和维护模拟持仓，并为后续分析生成隐私化快照；仍不包含信息抓取、AI 调用或投资报告页面。
+步骤 5 完成后，应用可以在本机录入持仓，并通过纯数据配置维护半导体主题、代表实体、
+上下游关系和基金暴露；仍不包含信息抓取、AI 调用或投资报告页面。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 
@@ -74,6 +76,18 @@ Copy-Item .env.example .env
 ```
 
 脚本不会覆盖已经存在的档案。启动本地服务后，可在 API 文档的 `portfolio` 分组中录入、更新、删除模拟持仓，并生成分析快照。所有持仓接口只接受本机来源；服务一旦绑定公网地址，该组接口会直接禁用。详细说明见 [docs/portfolio.md](docs/portfolio.md)。
+
+## 半导体主题配置
+
+在示例持仓初始化后，发布半导体主题配置：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\seed_demo_taxonomy.py
+```
+
+配置包含中英文别名、存储/晶圆/设备/设计/代工子主题、四类终端、铜和硅、代表性公司、
+上下游关系及 `007300` 暴露映射。配置变更通过新版本发布，旧版本不可修改并可回滚。
+详细说明见 [docs/taxonomy.md](docs/taxonomy.md)。
 
 ## DeepSeek 密钥
 

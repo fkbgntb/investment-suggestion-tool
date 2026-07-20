@@ -53,7 +53,14 @@ from app.domain.portfolio import (
     RedemptionFeeTier,
 )
 from app.domain.state_machine import StateTransitionRecord
-from app.domain.taxonomy import Entity, Exposure, Source, Topic
+from app.domain.taxonomy import (
+    Entity,
+    Exposure,
+    InfluenceRelation,
+    Source,
+    TaxonomyConfiguration,
+    Topic,
+)
 
 
 class DomainContractBundle(DomainModel):
@@ -73,7 +80,9 @@ class DomainContractBundle(DomainModel):
     market_snapshot: MarketSnapshot
     topic: Topic
     entity: Entity
+    influence_relation: InfluenceRelation
     exposure: Exposure
+    taxonomy_configuration: TaxonomyConfiguration
     source: Source
     external_document_content: ExternalDocumentContent
     raw_document_control: RawDocumentControl

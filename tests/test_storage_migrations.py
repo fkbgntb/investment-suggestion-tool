@@ -10,6 +10,7 @@ from app.storage.migrations import downgrade_database, upgrade_database
 from app.storage.models import Base
 
 EXPECTED_TABLES = {
+    "active_taxonomy_configurations",
     "alembic_version",
     "analysis_runs",
     "assets",
@@ -28,6 +29,7 @@ EXPECTED_TABLES = {
     "raw_documents",
     "reports",
     "sources",
+    "taxonomy_configurations",
     "topics",
     "workspaces",
 }
@@ -57,12 +59,12 @@ def test_empty_database_upgrades_and_can_round_trip_old_revision(tmp_path: Path)
         assert "raw_document_retention_days" in columns
     finally:
         engine.dispose()
-    assert revision(database_url) == "0003"
+    assert revision(database_url) == "0004"
 
     downgrade_database(database_url, "0001")
     assert revision(database_url) == "0001"
     upgrade_database(database_url)
-    assert revision(database_url) == "0003"
+    assert revision(database_url) == "0004"
 
 
 def test_version_one_database_with_existing_rows_upgrades_safely(tmp_path: Path) -> None:
