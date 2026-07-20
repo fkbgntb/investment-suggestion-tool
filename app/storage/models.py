@@ -393,6 +393,42 @@ class SourceHealthRow(TimestampMixin, WorkspaceScopedMixin, Base):
     circuit_open_until: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
+class SchedulerStateRow(TimestampMixin, WorkspaceScopedMixin, Base):
+    __tablename__ = "scheduler_states"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "job_name", name="uq_scheduler_states_workspace_job"),
+        Index("ix_scheduler_states_workspace_due", "workspace_id", "next_due_at"),
+    )
+
+    scheduler_state_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    job_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    last_completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    next_due_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    lease_owner: Mapped[str | None] = mapped_column(String(128))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    last_summary_date: Mapped[str | None] = mapped_column(String(10))
+    last_cleanup_date: Mapped[str | None] = mapped_column(String(10))
+
+
+class ScheduledTaskRow(TimestampMixin, WorkspaceScopedMixin, Base):
+    __tablename__ = "scheduled_tasks"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", "idempotency_key", name="uq_scheduled_tasks_workspace_key"
+        ),
+        Index("ix_scheduled_tasks_workspace_status_due", "workspace_id", "status", "not_before"),
+    )
+
+    task_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    task_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    not_before: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+
+
 class CrawlRunRow(SnapshotMixin, Base):
     __tablename__ = "crawl_runs"
     __table_args__ = (

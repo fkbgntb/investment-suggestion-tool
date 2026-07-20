@@ -18,14 +18,16 @@
 - [x] 步骤 7：信息源注册、适配器白名单、健康状态和版本化游标
 - [x] 步骤 8：GDELT 全球新闻发现、增量游标、持久化限额和失败记录
 - [x] 步骤 9：SEC 公司披露元数据、表单过滤、官方域名全文边界和限速
+- [x] 步骤 10：三小时调度、数据库租约、休眠补抓和下游任务队列
 
-步骤 9 完成后，应用可以手动运行 GDELT 和 SEC 两类来源，但尚未实现三小时自动调度、
-AI 调用或投资报告页面。SEC 真实请求前需按官方规则在本机配置联系邮箱。
+步骤 10 完成后，应用可以在 Windows 本机每三小时运行 GDELT 和已配置的 SEC 来源，并在休眠后
+补抓遗漏窗口；尚未实现文档清洗、AI 调用或投资报告页面。SEC 真实请求前仍需按官方规则配置邮箱。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 信息源配置说明见 [docs/source-registry.md](docs/source-registry.md)。
 GDELT 采集说明见 [docs/gdelt.md](docs/gdelt.md)。
 SEC 披露采集说明见 [docs/sec.md](docs/sec.md)。
+调度与休眠恢复说明见 [docs/scheduler.md](docs/scheduler.md)。
 
 ## 本地开发
 

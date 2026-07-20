@@ -7,7 +7,13 @@ from pathlib import Path
 
 from app.domain.analysis import AnalysisResult, DecisionContext, DecisionResult, Report
 from app.domain.base import DomainModel, IdempotencyKey, Money, MoneyRange
-from app.domain.collection import FetchFailure, SourceAdapterState, SourceHealthSnapshot, URLPolicy
+from app.domain.collection import (
+    FetchFailure,
+    SourceAdapterState,
+    SourceHealthSnapshot,
+    SourceOperationalStatus,
+    URLPolicy,
+)
 from app.domain.contracts import (
     AnalysisRequest,
     DeliveryReceipt,
@@ -74,6 +80,7 @@ class DomainContractBundle(DomainModel):
     fetch_failure: FetchFailure
     source_health_snapshot: SourceHealthSnapshot
     source_adapter_state: SourceAdapterState
+    source_operational_status: SourceOperationalStatus
     investment_profile: InvestmentProfile
     asset: Asset
     position: Position

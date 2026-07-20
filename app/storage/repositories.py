@@ -28,6 +28,8 @@ from app.storage.models import (
     PositionRow,
     PositionSnapshotRow,
     RawDocumentRow,
+    ScheduledTaskRow,
+    SchedulerStateRow,
     SourceAdapterStateRow,
     SourceHealthRow,
     SourceRow,
@@ -562,6 +564,165 @@ class SourceRepository:
         )
         if result.rowcount != 1:
             raise ConcurrentStateChange("adapter state version changed before persistence")
+
+
+class SchedulerStateRepository:
+    def __init__(self, session: Session, workspace_id: str) -> None:
+        self.session = session
+        self.workspace_id = workspace_id
+
+    def get_or_create(
+        self,
+        job_name: str,
+        *,
+        now: datetime,
+        next_due_at: datetime,
+    ) -> SchedulerStateRow:
+        row = self.session.scalar(
+            select(SchedulerStateRow).where(
+                SchedulerStateRow.workspace_id == self.workspace_id,
+                SchedulerStateRow.job_name == job_name,
+            )
+        )
+        if row is not None:
+            return row
+        identifier = str(uuid5(NAMESPACE_URL, f"{self.workspace_id}:scheduler:{job_name}"))
+        candidate = SchedulerStateRow(
+            scheduler_state_id=identifier,
+            workspace_id=self.workspace_id,
+            job_name=job_name,
+            next_due_at=next_due_at,
+        )
+        try:
+            with self.session.begin_nested():
+                self.session.add(candidate)
+                self.session.flush()
+            return candidate
+        except IntegrityError:
+            row = self.session.scalar(
+                select(SchedulerStateRow).where(
+                    SchedulerStateRow.workspace_id == self.workspace_id,
+                    SchedulerStateRow.job_name == job_name,
+                )
+            )
+            if row is None:
+                raise
+            return row
+
+    def acquire(
+        self,
+        job_name: str,
+        *,
+        owner: str,
+        now: datetime,
+        lease_until: datetime,
+        next_due_at: datetime,
+    ) -> SchedulerStateRow | None:
+        row = self.get_or_create(job_name, now=now, next_due_at=next_due_at)
+        result = self.session.execute(
+            update(SchedulerStateRow)
+            .where(
+                SchedulerStateRow.workspace_id == self.workspace_id,
+                SchedulerStateRow.job_name == job_name,
+                (SchedulerStateRow.lease_expires_at.is_(None))
+                | (SchedulerStateRow.lease_expires_at <= now),
+            )
+            .values(lease_owner=owner, lease_expires_at=lease_until, updated_at=now)
+        )
+        if result.rowcount != 1:
+            return None
+        self.session.refresh(row)
+        return row
+
+    def complete(
+        self,
+        job_name: str,
+        *,
+        owner: str,
+        completed_at: datetime,
+        next_due_at: datetime,
+        summary_date: str | None = None,
+        cleanup_date: str | None = None,
+    ) -> bool:
+        values: dict[str, Any] = {
+            "last_completed_at": completed_at,
+            "next_due_at": next_due_at,
+            "lease_owner": None,
+            "lease_expires_at": None,
+            "updated_at": utc_now(),
+        }
+        if summary_date is not None:
+            values["last_summary_date"] = summary_date
+        if cleanup_date is not None:
+            values["last_cleanup_date"] = cleanup_date
+        result = self.session.execute(
+            update(SchedulerStateRow)
+            .where(
+                SchedulerStateRow.workspace_id == self.workspace_id,
+                SchedulerStateRow.job_name == job_name,
+                SchedulerStateRow.lease_owner == owner,
+            )
+            .values(**values)
+        )
+        return result.rowcount == 1
+
+    def release(self, job_name: str, *, owner: str) -> bool:
+        result = self.session.execute(
+            update(SchedulerStateRow)
+            .where(
+                SchedulerStateRow.workspace_id == self.workspace_id,
+                SchedulerStateRow.job_name == job_name,
+                SchedulerStateRow.lease_owner == owner,
+            )
+            .values(lease_owner=None, lease_expires_at=None, updated_at=utc_now())
+        )
+        return result.rowcount == 1
+
+
+class TaskQueueRepository:
+    def __init__(self, session: Session, workspace_id: str) -> None:
+        self.session = session
+        self.workspace_id = workspace_id
+
+    def enqueue(
+        self,
+        *,
+        scope: str,
+        key: str,
+        payload_sha256: str,
+        task_id: str,
+        task_type: str,
+        payload: dict[str, Any],
+        not_before: datetime,
+    ) -> bool:
+        idempotency_key = f"{scope}:{key}"
+        existing = self.session.scalar(
+            select(ScheduledTaskRow).where(
+                ScheduledTaskRow.workspace_id == self.workspace_id,
+                ScheduledTaskRow.idempotency_key == idempotency_key,
+            )
+        )
+        if existing is not None:
+            if existing.payload_sha256 != payload_sha256 or existing.task_id != task_id:
+                raise IdempotencyConflict("task key was reused with different payload")
+            return False
+        row = ScheduledTaskRow(
+            task_id=task_id,
+            workspace_id=self.workspace_id,
+            task_type=task_type,
+            status="PENDING",
+            idempotency_key=idempotency_key,
+            payload_sha256=payload_sha256,
+            payload=payload,
+            not_before=not_before,
+        )
+        try:
+            with self.session.begin_nested():
+                self.session.add(row)
+                self.session.flush()
+        except IntegrityError:
+            return False
+        return True
 
 
 class CrawlRunRepository:

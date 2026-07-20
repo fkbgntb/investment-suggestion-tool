@@ -129,3 +129,11 @@ class SourceAdapterState(DomainModel):
     state_version: int = Field(default=0, ge=0)
     cursor: str | None = Field(default=None, max_length=2_000)
     updated_at: AwareDatetime
+
+
+class SourceOperationalStatus(DomainModel):
+    source_id: Identifier
+    enabled: bool
+    health: SourceHealthSnapshot
+    is_stale: bool
+    stale_after_hours: int = Field(default=8, ge=1, le=168)
