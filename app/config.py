@@ -6,7 +6,7 @@ from ipaddress import ip_address
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AliasChoices, Field, SecretStr, model_validator
+from pydantic import AliasChoices, AnyHttpUrl, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     raw_document_retention_days: int = Field(default=90, ge=1, le=3650)
     require_external_data_dir: bool = False
     allow_public_bind: bool = False
+    collector_proxy_url: AnyHttpUrl | None = None
     deepseek_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices("DEEPSEEK_API_KEY", "INVEST_DEEPSEEK_API_KEY"),

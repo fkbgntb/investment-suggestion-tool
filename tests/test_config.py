@@ -1,6 +1,7 @@
 import pytest
 from pydantic import SecretStr, ValidationError
 
+from app.collectors.factory import build_safe_http_client
 from app.config import Settings
 
 
@@ -36,3 +37,13 @@ def test_deepseek_key_is_stored_as_secret(monkeypatch: pytest.MonkeyPatch) -> No
 
     assert isinstance(settings.deepseek_api_key, SecretStr)
     assert "test-only-secret-value" not in repr(settings.deepseek_api_key)
+
+
+def test_collector_proxy_is_optional_and_typed() -> None:
+    direct = Settings(_env_file=None)
+    proxied = Settings(_env_file=None, collector_proxy_url="http://127.0.0.1:7897")
+
+    assert direct.collector_proxy_url is None
+    assert str(proxied.collector_proxy_url) == "http://127.0.0.1:7897/"
+    assert build_safe_http_client(direct)._proxy_url is None
+    assert build_safe_http_client(proxied)._proxy_url == "http://127.0.0.1:7897/"

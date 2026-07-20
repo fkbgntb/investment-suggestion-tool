@@ -13,6 +13,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.domain.collection import FetchFailure
 from app.domain.documents import RawDocument
 from app.domain.enums import TransitionOutcome
 from app.domain.portfolio import Asset, InvestmentProfile, Position, PositionAnalysisSnapshot
@@ -460,6 +461,35 @@ class CrawlRunRepository:
             self._assert_same_operation(existing, value)
             return existing, False
         return row, True
+
+    def mark_fetch_failure(
+        self,
+        *,
+        workspace_id: str,
+        crawl_run_id: str,
+        failure: FetchFailure,
+    ) -> bool:
+        row = self.session.scalar(
+            select(CrawlRunRow).where(
+                CrawlRunRow.workspace_id == workspace_id,
+                CrawlRunRow.crawl_run_id == crawl_run_id,
+                CrawlRunRow.source_id == failure.source_id,
+            )
+        )
+        if row is None:
+            return False
+        row.status = "RETRYABLE_FAILED" if failure.retryable else "PERMANENT_FAILED"
+        row.finished_at = failure.occurred_at
+        row.payload = {
+            **row.payload,
+            "failure": {
+                "error_code": failure.error_code.value,
+                "retryable": failure.retryable,
+            },
+        }
+        row.updated_at = failure.occurred_at
+        self.session.flush()
+        return True
 
     @staticmethod
     def _assert_same_operation(existing: CrawlRunRow, value: CrawlRunInput) -> None:

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from app.domain.analysis import AnalysisResult, DecisionContext, DecisionResult, Report
 from app.domain.base import DomainModel, IdempotencyKey, Money, MoneyRange
+from app.domain.collection import FetchFailure, SourceHealthSnapshot, URLPolicy
 from app.domain.contracts import (
     AnalysisRequest,
     DeliveryReceipt,
@@ -69,6 +70,9 @@ class DomainContractBundle(DomainModel):
     money: Money
     money_range: MoneyRange
     idempotency_key: IdempotencyKey
+    url_policy: URLPolicy
+    fetch_failure: FetchFailure
+    source_health_snapshot: SourceHealthSnapshot
     investment_profile: InvestmentProfile
     asset: Asset
     position: Position
