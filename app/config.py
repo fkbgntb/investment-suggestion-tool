@@ -64,6 +64,18 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("DEEPSEEK_API_KEY", "INVEST_DEEPSEEK_API_KEY"),
     )
+    deepseek_base_url: AnyHttpUrl = "https://api.deepseek.com"
+    deepseek_model: str = Field(
+        default="deepseek-v4-flash",
+        min_length=1,
+        max_length=120,
+        pattern=r"^[A-Za-z0-9._-]+$",
+    )
+    deepseek_max_input_characters: int = Field(default=12_000, ge=1_000, le=100_000)
+    deepseek_max_output_tokens: int = Field(default=1_200, ge=100, le=8_000)
+    deepseek_max_calls_per_day: int = Field(default=20, ge=1, le=1_000)
+    deepseek_daily_token_budget: int = Field(default=100_000, ge=1_000, le=10_000_000)
+    deepseek_timeout_seconds: float = Field(default=90, ge=10, le=300)
     backup_passphrase: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices(
@@ -86,6 +98,14 @@ class Settings(BaseSettings):
         ):
             raise ValueError("SEC contact email is invalid")
         return normalized
+
+    @field_validator("deepseek_api_key", mode="before")
+    @classmethod
+    def empty_deepseek_key_is_not_configured(cls, value: object) -> object:
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return value
 
     @model_validator(mode="after")
     def validate_security_defaults(self) -> "Settings":
@@ -121,6 +141,18 @@ class Settings(BaseSettings):
             and len(self.backup_passphrase.get_secret_value()) < 16
         ):
             raise ValueError("backup passphrase must contain at least 16 characters")
+
+        deepseek_url = self.deepseek_base_url
+        if (
+            deepseek_url.scheme != "https"
+            or deepseek_url.host != "api.deepseek.com"
+            or deepseek_url.username is not None
+            or deepseek_url.password is not None
+            or deepseek_url.path not in {None, "", "/"}
+            or deepseek_url.query is not None
+            or deepseek_url.fragment is not None
+        ):
+            raise ValueError("DeepSeek API URL must be the credential-free official HTTPS host")
 
         return self
 

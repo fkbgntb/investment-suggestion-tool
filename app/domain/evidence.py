@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import AwareDatetime, Field, model_validator
 
 from app.domain.base import DomainModel, Identifier, UnitInterval
@@ -18,6 +20,9 @@ class EvidenceDraft(DomainModel):
     entity_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=100)
     confidence: UnitInterval
     uncertainty: str | None = Field(default=None, max_length=2000)
+    claim_type: str = Field(default="unspecified", min_length=1, max_length=120)
+    impact_horizon: Literal["SHORT", "MEDIUM", "LONG", "UNKNOWN"] = "UNKNOWN"
+    directness: UnitInterval = 0
 
 
 class Evidence(DomainModel):
@@ -61,10 +66,28 @@ class EvidenceExtractionRequest(DomainModel):
 
     document_id: Identifier
     title: str = Field(min_length=1, max_length=1000)
-    normalized_body: str = Field(min_length=1, max_length=200_000)
+    summary: str | None = Field(default=None, max_length=20_000)
+    normalized_body: str = Field(min_length=1, max_length=100_000)
     language: str = Field(min_length=2, max_length=16, pattern=r"^[A-Za-z-]+$")
     topic_ids: tuple[Identifier, ...] = Field(min_length=1, max_length=50)
+    entity_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=100)
+    source_kind: str = Field(default="UNKNOWN", min_length=1, max_length=64)
+    published_at: AwareDatetime | None = None
+    suspicious_flags: tuple[str, ...] = Field(default_factory=tuple, max_length=50)
     prompt_version: str = Field(min_length=1, max_length=120)
+
+
+class EvidenceModelOutput(DomainModel):
+    """Strict JSON object the model may produce; it contains no control fields."""
+
+    document_id: Identifier
+    relevance: UnitInterval
+    event_type: str = Field(min_length=1, max_length=160)
+    related_topics: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=50)
+    related_entities: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=100)
+    claims: tuple[EvidenceDraft, ...] = Field(default_factory=tuple, max_length=50)
+    uncertainties: tuple[str, ...] = Field(default_factory=tuple, max_length=50)
+    source_is_primary: bool
 
 
 class EvidenceExtractionResult(DomainModel):
@@ -75,3 +98,11 @@ class EvidenceExtractionResult(DomainModel):
     model_version: str = Field(min_length=1, max_length=120)
     prompt_version: str = Field(min_length=1, max_length=120)
     completed_at: AwareDatetime
+    relevance: UnitInterval = 0
+    event_type: str = Field(default="unknown", min_length=1, max_length=160)
+    related_topic_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=50)
+    related_entity_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=100)
+    source_is_primary: bool = False
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    elapsed_ms: int = Field(default=0, ge=0)

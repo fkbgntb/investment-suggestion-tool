@@ -616,6 +616,45 @@ class EvidenceItemRow(SnapshotMixin, Base):
     cluster_id: Mapped[str | None] = mapped_column(String(128))
 
 
+class AIExtractionRunRow(SnapshotMixin, Base):
+    __tablename__ = "ai_extraction_runs"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "document_id"],
+            ["normalized_documents.workspace_id", "normalized_documents.document_id"],
+            ondelete="CASCADE",
+            name="fk_ai_extraction_runs_workspace_document",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "document_id",
+            "provider_name",
+            "model_version",
+            "prompt_version",
+            name="uq_ai_extraction_runs_workspace_document_versions",
+        ),
+        Index(
+            "ix_ai_extraction_runs_workspace_status",
+            "workspace_id",
+            "status",
+        ),
+    )
+
+    extraction_run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    document_id: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    input_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    elapsed_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_code: Mapped[str | None] = mapped_column(String(120))
+    completed_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
 class EvidenceScoreRow(SnapshotMixin, Base):
     __tablename__ = "evidence_scores"
     __table_args__ = (

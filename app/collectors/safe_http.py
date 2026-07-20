@@ -48,10 +48,12 @@ class SafeFetchError(RuntimeError):
         error_code: FetchErrorCode,
         *,
         retryable: bool,
+        status_code: int | None = None,
     ) -> None:
         self.source_id = source_id
         self.error_code = error_code
         self.retryable = retryable
+        self.status_code = status_code
         super().__init__(f"source fetch failed: {source_id} ({error_code.value})")
 
     def as_failure(self, occurred_at: datetime | None = None) -> FetchFailure:
@@ -148,6 +150,108 @@ class SafeHTTPClient:
         state.circuit_open_until = None
         return result
 
+    async def post_json(
+        self,
+        url: str,
+        policy: URLPolicy,
+        *,
+        bearer_credential: str,
+        payload: dict[str, object],
+    ) -> SafeHTTPResponse:
+        """POST bounded JSON to a policy-pinned API without exposing the credential."""
+
+        if not bearer_credential or "\r" in bearer_credential or "\n" in bearer_credential:
+            raise ValueError("bearer credential must be non-empty and cannot contain line breaks")
+        self._assert_started(policy.source_id)
+        self._assert_circuit_closed(policy)
+        await self._wait_for_source_slot(policy)
+        try:
+            async with asyncio.timeout(policy.total_timeout_seconds):
+                await self._validate_url(url, policy)
+                client = self._client
+                assert client is not None
+                timeout = httpx.Timeout(
+                    connect=policy.connect_timeout_seconds,
+                    read=policy.read_timeout_seconds,
+                    write=policy.connect_timeout_seconds,
+                    pool=policy.connect_timeout_seconds,
+                )
+                async with client.stream(
+                    "POST",
+                    url,
+                    headers={
+                        "Authorization": f"Bearer {bearer_credential}",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "User-Agent": policy.user_agent,
+                    },
+                    json=payload,
+                    timeout=timeout,
+                ) as response:
+                    if response.status_code in _REDIRECT_STATUSES:
+                        raise SafeFetchError(
+                            policy.source_id,
+                            FetchErrorCode.REDIRECT_REJECTED,
+                            retryable=False,
+                            status_code=response.status_code,
+                        )
+                    if response.status_code >= 400 or 300 <= response.status_code < 400:
+                        raise SafeFetchError(
+                            policy.source_id,
+                            FetchErrorCode.HTTP_STATUS,
+                            retryable=response.status_code >= 500 or response.status_code == 429,
+                            status_code=response.status_code,
+                        )
+                    content_type = (
+                        response.headers.get("content-type", "").split(";", 1)[0].strip().casefold()
+                    )
+                    if content_type not in policy.allowed_content_types:
+                        raise SafeFetchError(
+                            policy.source_id,
+                            FetchErrorCode.CONTENT_TYPE_REJECTED,
+                            retryable=False,
+                        )
+                    self._check_content_length(response, policy)
+                    body = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        body.extend(chunk)
+                        if len(body) > policy.max_response_bytes:
+                            raise SafeFetchError(
+                                policy.source_id,
+                                FetchErrorCode.RESPONSE_TOO_LARGE,
+                                retryable=False,
+                            )
+                    result = SafeHTTPResponse(
+                        source_id=policy.source_id,
+                        final_url=url,
+                        status_code=response.status_code,
+                        content_type=content_type,
+                        body=bytes(body),
+                    )
+        except SafeFetchError as error:
+            self._record_failure(policy, error)
+            logger.warning(
+                "API request rejected source_id=%s error_code=%s",
+                policy.source_id,
+                error.error_code.value,
+            )
+            raise
+        except (TimeoutError, httpx.TimeoutException) as cause:
+            error = SafeFetchError(policy.source_id, FetchErrorCode.TIMEOUT, retryable=True)
+            self._record_failure(policy, error)
+            raise error from cause
+        except httpx.RequestError as cause:
+            error = SafeFetchError(policy.source_id, FetchErrorCode.NETWORK_ERROR, retryable=True)
+            self._record_failure(policy, error)
+            raise error from cause
+
+        state = self._state(policy.source_id)
+        state.consecutive_failures = 0
+        state.last_error_code = None
+        state.last_success_at = datetime.now(UTC)
+        state.circuit_open_until = None
+        return result
+
     def health(self, source_id: str) -> SourceHealthSnapshot:
         state = self._state(source_id)
         now = datetime.now(UTC)
@@ -210,6 +314,7 @@ class SafeHTTPClient:
                         policy.source_id,
                         FetchErrorCode.HTTP_STATUS,
                         retryable=response.status_code >= 500 or response.status_code == 429,
+                        status_code=response.status_code,
                     )
 
                 content_type = response.headers.get("content-type", "").split(";", 1)[0].strip()

@@ -21,9 +21,10 @@
 - [x] 步骤 10：三小时调度、数据库租约、休眠补抓和下游任务队列
 - [x] 步骤 11：安全纯文本清洗、语言检测、精确去重和事件聚类
 - [x] 步骤 12：基于主题、实体和产业链配置的可解释相关性初筛
+- [x] 步骤 13：DeepSeek/规则替代的受限结构化证据抽取
 
 应用可以在 Windows 本机每三小时运行 GDELT 和已配置的 SEC 来源，并在休眠后补抓遗漏窗口；新文档
-会自动清洗、去重和筛除明显无关内容，但尚未实现 AI 调用或投资报告页面。SEC 真实请求前仍需按官方规则配置邮箱。
+会自动清洗、去重、筛除明显无关内容，并将相关文档转换为结构化证据；尚未实现证据评分、最终建议或投资报告页面。SEC 真实请求前仍需按官方规则配置邮箱。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 信息源配置说明见 [docs/source-registry.md](docs/source-registry.md)。
@@ -32,6 +33,7 @@ SEC 披露采集说明见 [docs/sec.md](docs/sec.md)。
 调度与休眠恢复说明见 [docs/scheduler.md](docs/scheduler.md)。
 清洗、去重与事件聚类说明见 [docs/normalization.md](docs/normalization.md)。
 相关性规则与人工标注说明见 [docs/relevance.md](docs/relevance.md)。
+DeepSeek 隔离、预算和证据 Schema 说明见 [docs/ai-evidence.md](docs/ai-evidence.md)。
 
 ## 本地开发
 
