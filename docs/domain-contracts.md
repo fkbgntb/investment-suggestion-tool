@@ -22,6 +22,7 @@
 | --- | --- |
 | 投资与行情 | `InvestmentProfile`、`Asset`、`Position`、`MarketSnapshot` |
 | 主题配置 | `Topic`、`Entity`、`InfluenceRelation`、`Exposure`、`TaxonomyConfiguration`、`Source` |
+| 抓取边界 | `URLPolicy`、`FetchFailure`、`SourceHealthSnapshot` |
 | 文档 | `RawDocument`、`EventCluster` |
 | 证据 | `Evidence`、`EvidenceScore` |
 | 分析建议 | `DecisionContext`、`DecisionResult`、`AnalysisResult`、`Report` |

@@ -9,14 +9,15 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from app.domain.base import IdempotencyKey
+from app.domain.collection import FetchFailure
 from app.domain.documents import ExternalDocumentContent, RawDocument, RawDocumentControl
-from app.domain.enums import AssetType, DocumentState, SourceKind, TrustTier
+from app.domain.enums import AssetType, DocumentState, FetchErrorCode, SourceKind, TrustTier
 from app.domain.portfolio import Asset, Position
 from app.domain.state_machine import evaluate_document_transition
 from app.domain.taxonomy import Source
 from app.storage.database import Database
 from app.storage.migrations import upgrade_database
-from app.storage.models import AuditEventRow, RawDocumentRow, SourceRow, WorkspaceRow
+from app.storage.models import AuditEventRow, CrawlRunRow, RawDocumentRow, SourceRow, WorkspaceRow
 from app.storage.repositories import (
     AuditDetailRejected,
     AuditRepository,
@@ -227,6 +228,48 @@ def test_document_transition_uses_optimistic_version_guard(tmp_path: Path) -> No
                 occurred_at=NOW + timedelta(minutes=2),
             )
             assert repository.apply_transition(noop) is False
+    finally:
+        db.dispose()
+
+
+def test_crawl_failure_persists_only_sanitized_reason(tmp_path: Path) -> None:
+    db = database(tmp_path)
+    try:
+        with db.session() as session:
+            WorkspaceRepository(session).create("personal", "Personal")
+            SourceRepository(session, "personal").add(source())
+            repository = CrawlRunRepository(session)
+            repository.add_if_absent(
+                CrawlRunInput(
+                    crawl_run_id="crawl-failed",
+                    workspace_id="personal",
+                    source_id="source-sec",
+                    idempotency_key="sec:failed",
+                    status="RUNNING",
+                    scheduled_at=NOW,
+                    payload={"cursor": "public-cursor"},
+                )
+            )
+            assert repository.mark_fetch_failure(
+                workspace_id="personal",
+                crawl_run_id="crawl-failed",
+                failure=FetchFailure(
+                    source_id="source-sec",
+                    error_code=FetchErrorCode.TIMEOUT,
+                    retryable=True,
+                    occurred_at=NOW,
+                ),
+            )
+
+            row = session.scalar(
+                select(CrawlRunRow).where(CrawlRunRow.crawl_run_id == "crawl-failed")
+            )
+            assert row is not None
+            assert row.status == "RETRYABLE_FAILED"
+            assert row.payload["failure"] == {"error_code": "TIMEOUT", "retryable": True}
+            serialized = str(row.payload)
+            assert "http" not in serialized
+            assert "127.0.0.1" not in serialized
     finally:
         db.dispose()
 

@@ -11,12 +11,13 @@
 - [x] 步骤 0：冻结第一版业务参数
 - [x] 步骤 1：工程骨架、安全配置、日志、健康检查和测试基线
 - [x] 步骤 2：版本化领域模型、模块接口、状态机和 JSON Schema
-- [x] 步骤 3：数据库、迁移、保留策略、审计和加密备份
+- [x] 步骤 3：数据库、迁移、保留策略、审计和可选备份
 - [x] 步骤 4：投资档案、持仓 CRUD、费用字段和不可变分析快照
 - [x] 步骤 5：版本化 Topic、Entity、影响关系和基金 Exposure 配置
+- [x] 步骤 6：统一抓取客户端、来源策略、限长、超时和失败隔离
 
-步骤 5 完成后，应用可以在本机录入持仓，并通过纯数据配置维护半导体主题、代表实体、
-上下游关系和基金暴露；仍不包含信息抓取、AI 调用或投资报告页面。
+步骤 6 完成后，应用已经具备接入公开信息源所需的统一 HTTP 基础，但尚未接入 GDELT、
+SEC，仍不包含真实新闻、AI 调用或投资报告页面。
 
 领域契约说明见 [docs/domain-contracts.md](docs/domain-contracts.md)。
 
@@ -59,7 +60,8 @@ Copy-Item .env.example .env
 
 数据库使用连续的 Alembic 版本，可以从旧版升级、回退后再升级。SQLite 只是第一版的本地实现；业务代码通过 SQLAlchemy 和仓储层访问数据，后续可以迁移到 PostgreSQL，原文目录也可以替换成云对象存储。
 
-需要备份时，只在本机 `.env` 中设置不少于 16 个字符的 `INVEST_BACKUP_PASSPHRASE`，然后运行：
+加密备份是可选功能，不是本地 Demo 的运行前提。确实需要备份时，才在本机 `.env` 中设置
+不少于 16 个字符的 `INVEST_BACKUP_PASSPHRASE`，然后运行：
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\storage_admin.py backup
@@ -88,6 +90,12 @@ Copy-Item .env.example .env
 配置包含中英文别名、存储/晶圆/设备/设计/代工子主题、四类终端、铜和硅、代表性公司、
 上下游关系及 `007300` 暴露映射。配置变更通过新版本发布，旧版本不可修改并可回滚。
 详细说明见 [docs/taxonomy.md](docs/taxonomy.md)。
+
+## 抓取基础设施
+
+后续信息源统一使用受 `URLPolicy` 约束的异步 HTTP 客户端。它会检查域名和公网地址，逐次
+验证重定向，并限制超时、Content-Type 与最大响应大小；失败只影响对应来源。可选代理只在
+本机配置，不写入适配器。详细说明见 [docs/collection.md](docs/collection.md)。
 
 ## DeepSeek 密钥
 

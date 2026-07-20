@@ -1344,6 +1344,65 @@
       "title": "FeeDataStatus",
       "type": "string"
     },
+    "FetchErrorCode": {
+      "enum": [
+        "INVALID_URL",
+        "SCHEME_REJECTED",
+        "HOST_REJECTED",
+        "PORT_REJECTED",
+        "DNS_FAILED",
+        "ADDRESS_REJECTED",
+        "REDIRECT_REJECTED",
+        "REDIRECT_LIMIT",
+        "TIMEOUT",
+        "HTTP_STATUS",
+        "CONTENT_TYPE_REJECTED",
+        "RESPONSE_TOO_LARGE",
+        "NETWORK_ERROR",
+        "CIRCUIT_OPEN"
+      ],
+      "title": "FetchErrorCode",
+      "type": "string"
+    },
+    "FetchFailure": {
+      "additionalProperties": false,
+      "description": "Failure data safe to persist in CrawlRun; never contains a URL or resolved address.",
+      "properties": {
+        "error_code": {
+          "$ref": "#/$defs/FetchErrorCode"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "retryable": {
+          "title": "Retryable",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "error_code",
+        "retryable",
+        "occurred_at"
+      ],
+      "title": "FetchFailure",
+      "type": "object"
+    },
     "FundFeePolicy": {
       "additionalProperties": false,
       "properties": {
@@ -3111,6 +3170,98 @@
       "title": "SourceFetchResult",
       "type": "object"
     },
+    "SourceHealthSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "circuit_open_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Circuit Open Until"
+        },
+        "consecutive_failures": {
+          "minimum": 0,
+          "title": "Consecutive Failures",
+          "type": "integer"
+        },
+        "last_error_code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FetchErrorCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_failure_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Failure At"
+        },
+        "last_success_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Success At"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/SourceHealthStatus"
+        }
+      },
+      "required": [
+        "source_id",
+        "status",
+        "consecutive_failures"
+      ],
+      "title": "SourceHealthSnapshot",
+      "type": "object"
+    },
+    "SourceHealthStatus": {
+      "enum": [
+        "HEALTHY",
+        "DEGRADED",
+        "CIRCUIT_OPEN"
+      ],
+      "title": "SourceHealthStatus",
+      "type": "string"
+    },
     "SourceKind": {
       "enum": [
         "REGULATOR",
@@ -3580,6 +3731,145 @@
       ],
       "title": "TrustTier",
       "type": "string"
+    },
+    "URLPolicy": {
+      "additionalProperties": false,
+      "description": "Per-source outbound policy; adapters cannot override these limits.",
+      "properties": {
+        "allow_subdomains": {
+          "default": false,
+          "title": "Allow Subdomains",
+          "type": "boolean"
+        },
+        "allowed_content_types": {
+          "default": [
+            "application/json",
+            "application/xml",
+            "text/html",
+            "text/plain"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Allowed Content Types",
+          "type": "array"
+        },
+        "allowed_hosts": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Allowed Hosts",
+          "type": "array"
+        },
+        "allowed_ports": {
+          "default": [
+            443
+          ],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Allowed Ports",
+          "type": "array"
+        },
+        "allowed_schemes": {
+          "default": [
+            "https"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Schemes",
+          "type": "array"
+        },
+        "circuit_cooldown_seconds": {
+          "default": 300.0,
+          "exclusiveMinimum": 0,
+          "maximum": 86400,
+          "title": "Circuit Cooldown Seconds",
+          "type": "number"
+        },
+        "circuit_failure_threshold": {
+          "default": 3,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Circuit Failure Threshold",
+          "type": "integer"
+        },
+        "connect_timeout_seconds": {
+          "default": 5.0,
+          "exclusiveMinimum": 0,
+          "maximum": 60,
+          "title": "Connect Timeout Seconds",
+          "type": "number"
+        },
+        "max_redirects": {
+          "default": 3,
+          "maximum": 10,
+          "minimum": 0,
+          "title": "Max Redirects",
+          "type": "integer"
+        },
+        "max_response_bytes": {
+          "default": 2000000,
+          "maximum": 10000000,
+          "minimum": 1024,
+          "title": "Max Response Bytes",
+          "type": "integer"
+        },
+        "minimum_interval_seconds": {
+          "default": 1.0,
+          "maximum": 3600,
+          "minimum": 0,
+          "title": "Minimum Interval Seconds",
+          "type": "number"
+        },
+        "read_timeout_seconds": {
+          "default": 15.0,
+          "exclusiveMinimum": 0,
+          "maximum": 120,
+          "title": "Read Timeout Seconds",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "total_timeout_seconds": {
+          "default": 30.0,
+          "exclusiveMinimum": 0,
+          "maximum": 300,
+          "title": "Total Timeout Seconds",
+          "type": "number"
+        },
+        "user_agent": {
+          "default": "investment-suggestion-tool/0.1 (personal research)",
+          "maxLength": 300,
+          "minLength": 8,
+          "title": "User Agent",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "allowed_hosts"
+      ],
+      "title": "URLPolicy",
+      "type": "object"
     }
   },
   "$id": "https://investment-suggestion-tool.local/schemas/domain-contracts-v1.json",
@@ -3637,6 +3927,9 @@
     },
     "external_document_content": {
       "$ref": "#/$defs/ExternalDocumentContent"
+    },
+    "fetch_failure": {
+      "$ref": "#/$defs/FetchFailure"
     },
     "fund_fee_policy": {
       "$ref": "#/$defs/FundFeePolicy"
@@ -3725,6 +4018,9 @@
     "source_fetch_result": {
       "$ref": "#/$defs/SourceFetchResult"
     },
+    "source_health_snapshot": {
+      "$ref": "#/$defs/SourceHealthSnapshot"
+    },
     "state_transition_record": {
       "$ref": "#/$defs/StateTransitionRecord"
     },
@@ -3745,12 +4041,18 @@
     },
     "topic": {
       "$ref": "#/$defs/Topic"
+    },
+    "url_policy": {
+      "$ref": "#/$defs/URLPolicy"
     }
   },
   "required": [
     "money",
     "money_range",
     "idempotency_key",
+    "url_policy",
+    "fetch_failure",
+    "source_health_snapshot",
     "investment_profile",
     "asset",
     "position",
