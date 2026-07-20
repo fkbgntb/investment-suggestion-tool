@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.collectors.registry import AdapterRegistry
-from app.domain.collection import SourceAdapterState, SourceHealthSnapshot
+from app.domain.collection import SourceAdapterState, SourceHealthSnapshot, SourceOperationalStatus
 from app.domain.taxonomy import Source
 from app.security.local_access import require_local_access
+from app.services.scheduler import is_source_stale
 from app.services.sources import SourceConflict, SourceNotFound, SourceService
 from app.storage.database import Database
 
@@ -108,3 +110,21 @@ def get_source_adapter_state(
         return service.adapter_state(source_id)
     except SourceNotFound as error:
         raise _not_found(error) from error
+
+
+@router.get("/{source_id}/status", response_model=SourceOperationalStatus)
+def get_source_operational_status(
+    source_id: str,
+    service: SourceServiceDependency,
+) -> SourceOperationalStatus:
+    try:
+        source = service.get(source_id)
+        health = service.health(source_id)
+    except SourceNotFound as error:
+        raise _not_found(error) from error
+    return SourceOperationalStatus(
+        source_id=source_id,
+        enabled=source.enabled,
+        health=health,
+        is_stale=is_source_stale(health, datetime.now(UTC)),
+    )

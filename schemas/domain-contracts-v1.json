@@ -3470,6 +3470,50 @@
       "title": "SourceKind",
       "type": "string"
     },
+    "SourceOperationalStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "health": {
+          "$ref": "#/$defs/SourceHealthSnapshot"
+        },
+        "is_stale": {
+          "title": "Is Stale",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "stale_after_hours": {
+          "default": 8,
+          "maximum": 168,
+          "minimum": 1,
+          "title": "Stale After Hours",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "source_id",
+        "enabled",
+        "health",
+        "is_stale"
+      ],
+      "title": "SourceOperationalStatus",
+      "type": "object"
+    },
     "StateTransitionRecord": {
       "additionalProperties": false,
       "properties": {
@@ -4219,6 +4263,9 @@
     "source_health_snapshot": {
       "$ref": "#/$defs/SourceHealthSnapshot"
     },
+    "source_operational_status": {
+      "$ref": "#/$defs/SourceOperationalStatus"
+    },
     "state_transition_record": {
       "$ref": "#/$defs/StateTransitionRecord"
     },
@@ -4252,6 +4299,7 @@
     "fetch_failure",
     "source_health_snapshot",
     "source_adapter_state",
+    "source_operational_status",
     "investment_profile",
     "asset",
     "position",
