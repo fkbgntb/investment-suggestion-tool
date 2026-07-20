@@ -3,8 +3,16 @@
     "AnalysisRequest": {
       "additionalProperties": false,
       "properties": {
+        "analyzed_at": {
+          "format": "date-time",
+          "title": "Analyzed At",
+          "type": "string"
+        },
         "context": {
           "$ref": "#/$defs/DecisionContext"
+        },
+        "decision": {
+          "$ref": "#/$defs/DecisionResult"
         },
         "prompt_version": {
           "maxLength": 120,
@@ -21,7 +29,9 @@
       },
       "required": [
         "context",
-        "prompt_version"
+        "decision",
+        "prompt_version",
+        "analyzed_at"
       ],
       "title": "AnalysisRequest",
       "type": "object"
@@ -29,6 +39,15 @@
     "AnalysisResult": {
       "additionalProperties": false,
       "properties": {
+        "allowed_actions": {
+          "items": {
+            "$ref": "#/$defs/SuggestionLabel"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Allowed Actions",
+          "type": "array"
+        },
         "analysis_id": {
           "maxLength": 128,
           "minLength": 1,
@@ -41,6 +60,17 @@
           "title": "Analyzed At",
           "type": "string"
         },
+        "bearish_evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Bearish Evidence Ids",
+          "type": "array"
+        },
         "bearish_factors": {
           "items": {
             "type": "string"
@@ -49,12 +79,31 @@
           "title": "Bearish Factors",
           "type": "array"
         },
+        "bullish_evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Bullish Evidence Ids",
+          "type": "array"
+        },
         "bullish_factors": {
           "items": {
             "type": "string"
           },
           "maxItems": 100,
           "title": "Bullish Factors",
+          "type": "array"
+        },
+        "causal_chains": {
+          "items": {
+            "$ref": "#/$defs/CausalChain"
+          },
+          "maxItems": 100,
+          "title": "Causal Chains",
           "type": "array"
         },
         "confidence": {
@@ -78,6 +127,11 @@
           "title": "Context Id",
           "type": "string"
         },
+        "degraded": {
+          "default": false,
+          "title": "Degraded",
+          "type": "boolean"
+        },
         "evidence_ids": {
           "items": {
             "maxLength": 128,
@@ -89,11 +143,42 @@
           "title": "Evidence Ids",
           "type": "array"
         },
+        "input_tokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Input Tokens",
+          "type": "integer"
+        },
+        "invalidation_triggers": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Invalidation Triggers",
+          "type": "array"
+        },
         "model_version": {
           "maxLength": 120,
           "minLength": 1,
           "title": "Model Version",
           "type": "string"
+        },
+        "neutral_evidence_ids": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Neutral Evidence Ids",
+          "type": "array"
+        },
+        "output_tokens": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Output Tokens",
+          "type": "integer"
         },
         "pipeline_version": {
           "maxLength": 120,
@@ -107,10 +192,40 @@
           "title": "Prompt Version",
           "type": "string"
         },
+        "provider_name": {
+          "default": "rule-synthesis",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Provider Name",
+          "type": "string"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
           "title": "Schema Version",
+          "type": "string"
+        },
+        "stance": {
+          "default": "UNCERTAIN",
+          "enum": [
+            "BULLISH",
+            "BEARISH",
+            "MIXED",
+            "UNCERTAIN"
+          ],
+          "title": "Stance",
+          "type": "string"
+        },
+        "suggested_action": {
+          "$ref": "#/$defs/SuggestionLabel",
+          "default": "OBSERVE"
+        },
+        "summary": {
+          "default": "暂无综合摘要",
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Summary",
           "type": "string"
         },
         "uncertainties": {
@@ -125,6 +240,7 @@
       "required": [
         "analysis_id",
         "context_id",
+        "allowed_actions",
         "confidence",
         "pipeline_version",
         "model_version",
@@ -214,6 +330,98 @@
       ],
       "title": "AssetType",
       "type": "string"
+    },
+    "CausalChain": {
+      "additionalProperties": false,
+      "properties": {
+        "conclusion": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Conclusion",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Confidence"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/CausalChainStep"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "steps",
+        "conclusion",
+        "confidence"
+      ],
+      "title": "CausalChain",
+      "type": "object"
+    },
+    "CausalChainStep": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Confidence"
+        },
+        "evidence_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "relation": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Relation",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "relation",
+        "confidence"
+      ],
+      "title": "CausalChainStep",
+      "type": "object"
     },
     "DecisionContext": {
       "additionalProperties": false,

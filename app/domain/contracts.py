@@ -55,7 +55,18 @@ class MarketDataRequest(DomainModel):
 
 class AnalysisRequest(DomainModel):
     context: DecisionContext
+    decision: DecisionResult
     prompt_version: str = Field(min_length=1, max_length=120)
+    analyzed_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def decision_must_match_context(self) -> AnalysisRequest:
+        if self.decision.context_id != self.context.context_id:
+            raise ValueError("analysis decision and context must match")
+        known = {item.evidence_id for item in self.context.evidence}
+        if not set(self.decision.evidence_ids).issubset(known):
+            raise ValueError("analysis decision references unknown evidence")
+        return self
 
 
 class ReportRenderRequest(DomainModel):

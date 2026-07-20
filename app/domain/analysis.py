@@ -106,18 +106,67 @@ class DecisionResult(DomainModel):
         return self
 
 
+class CausalChainStep(DomainModel):
+    evidence_id: Identifier
+    relation: str = Field(min_length=1, max_length=500)
+    confidence: UnitInterval
+
+
+class CausalChain(DomainModel):
+    steps: tuple[CausalChainStep, ...] = Field(min_length=1, max_length=10)
+    conclusion: str = Field(min_length=1, max_length=1000)
+    confidence: UnitInterval
+
+    @model_validator(mode="after")
+    def chain_confidence_cannot_exceed_weakest_step(self) -> CausalChain:
+        if self.confidence > min(step.confidence for step in self.steps):
+            raise ValueError("causal-chain confidence cannot exceed its weakest step")
+        return self
+
+
 class AnalysisResult(DomainModel):
     analysis_id: Identifier
     context_id: Identifier
+    stance: Literal["BULLISH", "BEARISH", "MIXED", "UNCERTAIN"] = "UNCERTAIN"
+    summary: str = Field(default="暂无综合摘要", min_length=1, max_length=4000)
     bullish_factors: tuple[str, ...] = Field(default_factory=tuple, max_length=100)
     bearish_factors: tuple[str, ...] = Field(default_factory=tuple, max_length=100)
     uncertainties: tuple[str, ...] = Field(default_factory=tuple, max_length=100)
+    bullish_evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
+    bearish_evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
+    neutral_evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
+    causal_chains: tuple[CausalChain, ...] = Field(default_factory=tuple, max_length=100)
+    invalidation_triggers: tuple[str, ...] = Field(default_factory=tuple, max_length=100)
+    suggested_action: SuggestionLabel = SuggestionLabel.OBSERVE
+    allowed_actions: tuple[SuggestionLabel, ...] = Field(min_length=1, max_length=20)
     evidence_ids: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=1000)
     confidence: UnitInterval
     pipeline_version: str = Field(min_length=1, max_length=120)
     model_version: str = Field(min_length=1, max_length=120)
     prompt_version: str = Field(min_length=1, max_length=120)
+    provider_name: Identifier = "rule-synthesis"
+    degraded: bool = False
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
     analyzed_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def references_and_action_must_be_bounded(self) -> AnalysisResult:
+        known = set(self.evidence_ids)
+        referenced = {
+            *self.bullish_evidence_ids,
+            *self.bearish_evidence_ids,
+            *self.neutral_evidence_ids,
+        }
+        for chain in self.causal_chains:
+            referenced.update(step.evidence_id for step in chain.steps)
+        if not referenced.issubset(known):
+            raise ValueError("analysis references unknown evidence ids")
+        if self.suggested_action not in self.allowed_actions:
+            raise ValueError("AI suggestion must remain inside the deterministic allowed set")
+        if len(set(self.allowed_actions)) != len(self.allowed_actions):
+            raise ValueError("analysis allowed actions must be unique")
+        return self
 
 
 class Report(DomainModel):

@@ -726,6 +726,37 @@ class DecisionResultRow(SnapshotMixin, Base):
     rule_version: Mapped[str] = mapped_column(String(120), nullable=False)
 
 
+class AnalysisResultRow(SnapshotMixin, Base):
+    __tablename__ = "analysis_results"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "analysis_run_id"],
+            ["analysis_runs.workspace_id", "analysis_runs.analysis_run_id"],
+            ondelete="CASCADE",
+            name="fk_analysis_results_workspace_analysis",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "analysis_run_id",
+            "model_version",
+            "prompt_version",
+            name="uq_analysis_results_workspace_run_versions",
+        ),
+        Index("ix_analysis_results_workspace_completed", "workspace_id", "completed_at"),
+    )
+
+    analysis_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    analysis_run_id: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(120), nullable=False)
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_code: Mapped[str | None] = mapped_column(String(120))
+    completed_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
 class ReportRow(SnapshotMixin, Base):
     __tablename__ = "reports"
     __table_args__ = (
