@@ -27,6 +27,9 @@
 - [x] 步骤 16：规则边界内的 AI 多空综合、引用校验和无密钥降级分析
 - [x] 步骤 17：报告校验、XSS 安全 HTML、原始来源链接和不可变历史快照
 - [x] 步骤 18：本机个人 Web 页面、版本化 API、CSRF/同源边界和一键分析闭环
+- [x] 步骤 20：安全与质量回归、版本化指标和只记录建议的影子运行
+
+步骤 19 是购买云服务器并开放远程访问后的可选部署阶段；当前个人本机 Demo 不启用，因此不会产生云端费用或扩大网络暴露面。
 
 应用可以在 Windows 本机每三小时运行 GDELT 和已配置的 SEC 来源，并在休眠后补抓遗漏窗口；新文档
 会自动清洗、去重、筛除明显无关内容，并将相关文档转换为结构化证据和透明分数；已有确定性建议、可降级的 AI 综合引擎、不可变 HTML 报告和本机可视化页面。SEC 真实请求前仍需按官方规则配置邮箱。
@@ -74,6 +77,14 @@ Copy-Item .env.example .env
 ```powershell
 .\scripts\check.ps1 -Audit
 ```
+
+执行一次不触发任何交易的影子运行：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_shadow_once.py
+```
+
+质量指标和建议变化记录说明见 [docs/quality-shadow.md](docs/quality-shadow.md)。
 
 ## 本地数据存储
 

@@ -15,6 +15,7 @@ from app.domain.documents import EventCluster, RawDocument
 from app.domain.evidence import Evidence, EvidenceScore
 from app.domain.jobs import JobRun
 from app.domain.portfolio import Asset, InvestmentProfile, Position
+from app.domain.quality import QualityMetrics, ShadowRunRecord
 from app.domain.taxonomy import Entity, Exposure, Source, Topic
 
 __all__ = [
@@ -34,11 +35,13 @@ __all__ = [
     "MarketDataProvider",
     "NotificationProvider",
     "Position",
+    "QualityMetrics",
     "RawDocument",
     "Report",
     "ReportRenderer",
     "Source",
     "SourceAdapter",
+    "ShadowRunRecord",
     "StorageProvider",
     "TaskDispatcher",
     "Topic",
