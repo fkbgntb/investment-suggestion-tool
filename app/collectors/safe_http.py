@@ -198,7 +198,7 @@ class SafeHTTPClient:
                     if response.status_code >= 400 or 300 <= response.status_code < 400:
                         raise SafeFetchError(
                             policy.source_id,
-                            FetchErrorCode.HTTP_STATUS,
+                            self._status_error_code(response.status_code),
                             retryable=response.status_code >= 500 or response.status_code == 429,
                             status_code=response.status_code,
                         )
@@ -312,7 +312,7 @@ class SafeHTTPClient:
                 if response.status_code >= 400 or 300 <= response.status_code < 400:
                     raise SafeFetchError(
                         policy.source_id,
-                        FetchErrorCode.HTTP_STATUS,
+                        self._status_error_code(response.status_code),
                         retryable=response.status_code >= 500 or response.status_code == 429,
                         status_code=response.status_code,
                     )
@@ -342,6 +342,12 @@ class SafeHTTPClient:
                     content_type=content_type,
                     body=bytes(body),
                 )
+
+    @staticmethod
+    def _status_error_code(status_code: int) -> FetchErrorCode:
+        if status_code == 429:
+            return FetchErrorCode.RATE_LIMITED
+        return FetchErrorCode.HTTP_STATUS
 
     async def _validate_url(self, url: str, policy: URLPolicy) -> None:
         try:

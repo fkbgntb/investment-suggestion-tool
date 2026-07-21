@@ -259,6 +259,33 @@ def test_source_rate_limit_is_independent() -> None:
     run(scenario())
 
 
+@pytest.mark.parametrize(
+    ("status_code", "expected_code", "retryable"),
+    [
+        (404, FetchErrorCode.HTTP_STATUS, False),
+        (429, FetchErrorCode.RATE_LIMITED, True),
+        (503, FetchErrorCode.HTTP_STATUS, True),
+    ],
+)
+def test_http_status_errors_distinguish_rate_limiting(
+    status_code: int,
+    expected_code: FetchErrorCode,
+    retryable: bool,
+) -> None:
+    async def scenario() -> None:
+        transport = httpx.MockTransport(
+            lambda request: httpx.Response(status_code, request=request)
+        )
+        async with SafeHTTPClient(resolver=StaticResolver(), transport=transport) as client:
+            with pytest.raises(SafeFetchError) as captured:
+                await client.fetch("https://example.com/article", policy())
+            assert captured.value.error_code is expected_code
+            assert captured.value.retryable is retryable
+            assert captured.value.status_code == status_code
+
+    run(scenario())
+
+
 def test_failure_and_logs_do_not_expose_url_or_resolved_address(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
