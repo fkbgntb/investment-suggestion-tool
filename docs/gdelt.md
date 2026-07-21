@@ -1,5 +1,8 @@
 # GDELT 全球新闻发现
 
+> 当前个人 Demo 因公共 API 持续限流而默认停用 GDELT，改用 Alpha Vantage 新闻发现。适配器保留为
+> 可选回退，避免未来恢复时破坏存量数据和游标。
+
 第一条真实信息源使用 [GDELT DOC 2.0 官方 API](https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/)。
 它是全球新闻聚合与发现来源，不是事实本身，也不会因为收录了一篇文章而提升文章可信度。
 注册表将它标记为 `AGGREGATOR / SECONDARY`，后续需要由公司公告、监管披露等独立来源交叉验证。

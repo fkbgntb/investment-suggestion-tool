@@ -12,6 +12,7 @@ from app.collectors.factory import build_safe_http_client
 from app.collectors.registry import build_default_adapter_registry
 from app.collectors.sec import SECCompany
 from app.config import Settings
+from app.services.alpha_vantage_collection import AlphaVantageCollectionService
 from app.services.analysis_synthesis import AnalysisSynthesisService, build_synthesis_provider
 from app.services.evidence_extraction import EvidenceExtractionService, build_evidence_provider
 from app.services.evidence_scoring import EvidenceScoringService
@@ -54,7 +55,22 @@ async def run(*, force: bool = False) -> int:
                 for source in sources:
                     try:
                         with database.session() as session:
-                            if source.adapter_name == "gdelt-doc":
+                            if source.adapter_name == "alpha-vantage-news":
+                                if settings.alpha_vantage_api_key is None:
+                                    failed_count += 1
+                                    continue
+                                outcome = await AlphaVantageCollectionService(
+                                    session,
+                                    settings.portfolio_workspace_id,
+                                    http_client,
+                                    settings.alpha_vantage_api_key,
+                                    max_records=settings.alpha_vantage_max_records,
+                                    max_calls_per_day=(settings.alpha_vantage_max_calls_per_day),
+                                    max_documents_per_day=(
+                                        settings.alpha_vantage_max_documents_per_day
+                                    ),
+                                ).run(source.source_id, since=since, until=until)
+                            elif source.adapter_name == "gdelt-doc":
                                 outcome = await GDELTCollectionService(
                                     session,
                                     settings.portfolio_workspace_id,

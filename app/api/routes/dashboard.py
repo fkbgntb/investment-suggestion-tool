@@ -93,6 +93,7 @@ class PublicSettingsView(BaseModel):
     data_directory: str
     deepseek_configured: bool
     deepseek_model: str
+    alpha_vantage_configured: bool
     portfolio_reference_value_configured: bool
     portfolio_reference_value: Decimal | None = None
 
@@ -327,6 +328,7 @@ def public_settings(request: Request) -> PublicSettingsView:
         data_directory=str(settings.data_dir),
         deepseek_configured=settings.deepseek_api_key is not None,
         deepseek_model=settings.deepseek_model,
+        alpha_vantage_configured=settings.alpha_vantage_api_key is not None,
         portfolio_reference_value_configured=settings.portfolio_reference_value is not None,
         portfolio_reference_value=settings.portfolio_reference_value,
     )

@@ -797,6 +797,20 @@ class CrawlRunRepository:
             return existing, False
         return row, True
 
+    def count_since(self, *, workspace_id: str, source_id: str, since: datetime) -> int:
+        return int(
+            self.session.scalar(
+                select(func.count())
+                .select_from(CrawlRunRow)
+                .where(
+                    CrawlRunRow.workspace_id == workspace_id,
+                    CrawlRunRow.source_id == source_id,
+                    CrawlRunRow.scheduled_at >= since,
+                )
+            )
+            or 0
+        )
+
     def mark_fetch_failure(
         self,
         *,

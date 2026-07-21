@@ -173,6 +173,7 @@ def test_position_update_and_manual_crawl_require_valid_local_session(
             assert crawl.json()["new_document_count"] == 2
             settings = await client.get("/api/v1/settings/public")
             assert settings.json()["deepseek_configured"] is False
+            assert settings.json()["alpha_vantage_configured"] is False
             assert "api_key" not in settings.text.casefold()
         app.state.database.dispose()
 
