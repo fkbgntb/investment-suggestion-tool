@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "alpha-vantage-news",
+  "name": "Alpha Vantage News & Sentiment",
+  "kind": "AGGREGATOR",
+  "trust_tier": "SECONDARY",
+  "base_url": "https://www.alphavantage.co/query",
+  "regions": ["global"],
+  "languages": ["en"],
+  "enabled": true,
+  "adapter_name": "alpha-vantage-news",
+  "crawl_interval_hours": 3,
+  "allow_fulltext": false,
+  "allowed_domains": ["www.alphavantage.co"],
+  "terms_url": "https://www.alphavantage.co/terms_of_service/",
+  "config_version": "1.0"
+}

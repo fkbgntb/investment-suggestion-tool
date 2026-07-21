@@ -12,6 +12,7 @@ def test_defaults_are_local_and_safe() -> None:
     assert settings.debug is False
     assert settings.allow_public_bind is False
     assert settings.deepseek_api_key is None
+    assert settings.alpha_vantage_api_key is None
 
 
 def test_non_loopback_binding_requires_explicit_acknowledgement() -> None:
@@ -40,6 +41,17 @@ def test_deepseek_key_is_stored_as_secret(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setenv("DEEPSEEK_API_KEY", "")
     assert Settings(_env_file=None).deepseek_api_key is None
+
+
+def test_alpha_vantage_key_is_stored_as_secret(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INVEST_ALPHA_VANTAGE_API_KEY", "test-only-alpha-key")
+    settings = Settings(_env_file=None)
+
+    assert isinstance(settings.alpha_vantage_api_key, SecretStr)
+    assert "test-only-alpha-key" not in repr(settings.alpha_vantage_api_key)
+
+    monkeypatch.setenv("INVEST_ALPHA_VANTAGE_API_KEY", "")
+    assert Settings(_env_file=None).alpha_vantage_api_key is None
 
 
 def test_deepseek_endpoint_is_pinned_to_the_official_https_host() -> None:

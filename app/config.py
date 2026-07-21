@@ -60,6 +60,16 @@ class Settings(BaseSettings):
     collector_proxy_url: AnyHttpUrl | None = None
     gdelt_max_records: int = Field(default=50, ge=1, le=250)
     gdelt_max_documents_per_day: int = Field(default=500, ge=1, le=10_000)
+    alpha_vantage_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "INVEST_ALPHA_VANTAGE_API_KEY",
+            "ALPHA_VANTAGE_API_KEY",
+        ),
+    )
+    alpha_vantage_max_records: int = Field(default=50, ge=1, le=1_000)
+    alpha_vantage_max_calls_per_day: int = Field(default=20, ge=1, le=25)
+    alpha_vantage_max_documents_per_day: int = Field(default=500, ge=1, le=10_000)
     sec_contact_email: str | None = Field(default=None, max_length=254, repr=False)
     sec_max_filings_per_company: int = Field(default=50, ge=1, le=250)
     deepseek_api_key: SecretStr | None = Field(
@@ -106,6 +116,14 @@ class Settings(BaseSettings):
     @field_validator("deepseek_api_key", mode="before")
     @classmethod
     def empty_deepseek_key_is_not_configured(cls, value: object) -> object:
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return value
+
+    @field_validator("alpha_vantage_api_key", mode="before")
+    @classmethod
+    def empty_alpha_vantage_key_is_not_configured(cls, value: object) -> object:
         if isinstance(value, str):
             normalized = value.strip()
             return normalized or None

@@ -10,7 +10,8 @@ PostgreSQL 或 Celery 时，采集用例不需要重写。
 `max_instances=1`。进程异常退出后租约最多 60 分钟自动过期。Windows 休眠或关机期间没有运行时，
 下次启动按三小时窗口补抓，单次最多回补 8 个窗口（24 小时），避免突然产生无限请求。
 
-每个来源在独立事务中运行；SEC 缺少联系邮箱或某个来源失败只增加该来源失败计数，不阻塞 GDELT。
+每个来源在独立事务中运行；Alpha Vantage、GDELT 和 SEC 任一来源失败只增加自己的失败计数，
+不会阻塞其他来源。当前个人 Demo 默认启用 Alpha Vantage 与 SEC，GDELT 作为可选回退保留。
 CrawlRun 保存计划时间、完成时间、状态、数量和脱敏错误代码。超过 8 小时没有成功记录的启用来源
 通过 `/api/v1/sources/{source_id}/status` 标记 `is_stale=true`。
 

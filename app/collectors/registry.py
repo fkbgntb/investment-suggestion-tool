@@ -36,6 +36,5 @@ class AdapterRegistry:
 
 
 def build_default_adapter_registry() -> AdapterRegistry:
-    # This bounded no-network adapter supports acceptance tests and local demos.
-    # Real adapters are registered here by later collection phases.
-    return AdapterRegistry(("gdelt-doc", "mock-rss", "sec-submissions"))
+    # Names are a code-owned whitelist; source rows cannot import arbitrary adapters.
+    return AdapterRegistry(("alpha-vantage-news", "gdelt-doc", "mock-rss", "sec-submissions"))
