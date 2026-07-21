@@ -32,6 +32,7 @@ from app.domain.taxonomy import Topic
 
 GDELT_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
 _GDELT_TIME = "%Y%m%dT%H%M%SZ"
+_MAX_QUERY_TERMS = 16
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _LANGUAGE_CODES = {
     "arabic": "ar",
@@ -98,19 +99,38 @@ class GDELTQueryBuilder:
         self._topics = topics
 
     def build(self, request: SourceDiscoveryRequest, *, max_records: int) -> GDELTQuery:
-        terms: list[str] = []
+        candidates_by_topic: list[tuple[str, ...]] = []
         for topic_id in request.topic_ids:
             topic = self._topics.get(topic_id)
             if topic is None or not topic.enabled:
                 raise ValueError(f"unknown or disabled topic: {topic_id}")
             candidates = (topic.name, *topic.aliases, *topic.keywords)
-            for candidate in candidates[:8]:
-                sanitized = self._sanitize_term(candidate)
-                if sanitized and sanitized.casefold() not in {item.casefold() for item in terms}:
-                    terms.append(sanitized)
+            candidates_by_topic.append(
+                tuple(
+                    sanitized
+                    for candidate in candidates[:8]
+                    if (sanitized := self._sanitize_term(candidate))
+                )
+            )
+        terms: list[str] = []
+        normalized_terms: set[str] = set()
+        maximum_candidates = max((len(items) for items in candidates_by_topic), default=0)
+        for candidate_index in range(maximum_candidates):
+            for candidates in candidates_by_topic:
+                if candidate_index >= len(candidates):
+                    continue
+                candidate = candidates[candidate_index]
+                normalized = candidate.casefold()
+                if normalized in normalized_terms:
+                    continue
+                terms.append(candidate)
+                normalized_terms.add(normalized)
+                if len(terms) >= _MAX_QUERY_TERMS:
+                    break
+            if len(terms) >= _MAX_QUERY_TERMS:
+                break
         if not terms:
             raise ValueError("at least one safe query term is required")
-        terms = terms[:40]
         query = "(" + " OR ".join(f'"{term}"' for term in terms) + ")"
         if len(query) > 1_000:
             raise ValueError("GDELT query exceeds the bounded length")
@@ -199,7 +219,10 @@ class GDELTAdapter:
             allowed_hosts=("api.gdeltproject.org",),
             allowed_content_types=("application/json", "text/plain"),
             max_response_bytes=2_000_000,
-            minimum_interval_seconds=1,
+            minimum_interval_seconds=6,
+            connect_timeout_seconds=15,
+            read_timeout_seconds=60,
+            total_timeout_seconds=90,
         )
 
     @classmethod

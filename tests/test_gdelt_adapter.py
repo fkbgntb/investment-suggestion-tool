@@ -64,6 +64,18 @@ def request(*, cursor: str | None = None) -> SourceDiscoveryRequest:
     )
 
 
+def test_gdelt_policy_tolerates_slow_api_without_relaxing_content_bounds() -> None:
+    policy = GDELTAdapter.url_policy("gdelt-global-news")
+
+    assert policy.connect_timeout_seconds == 15
+    assert policy.read_timeout_seconds == 60
+    assert policy.total_timeout_seconds == 90
+    assert policy.minimum_interval_seconds == 6
+    assert policy.allowed_hosts == ("api.gdeltproject.org",)
+    assert policy.allowed_content_types == ("application/json", "text/plain")
+    assert policy.max_response_bytes == 2_000_000
+
+
 def fixture_payload() -> dict[str, object]:
     return {
         "articles": [
@@ -104,6 +116,26 @@ def test_query_builder_is_topic_driven_bounded_and_cursor_aware() -> None:
     assert decoded.params["startdatetime"] == "20260720010000"
     assert "Semiconductor" in decoded.params["query"]
     assert len(query.query_sha256) == 64
+
+
+def test_query_builder_balances_topics_and_caps_expensive_or_terms() -> None:
+    topics = {
+        f"topic-{index}": topic(f"topic-{index}").model_copy(
+            update={
+                "name": f"Theme {index}",
+                "aliases": (f"Alias {index}",),
+                "keywords": (f"Keyword {index}",),
+            }
+        )
+        for index in range(10)
+    }
+    value = request().model_copy(update={"topic_ids": tuple(topics)})
+    query = GDELTQueryBuilder(topics).build(value, max_records=50)
+    expression = httpx.URL(query.url).params["query"]
+
+    assert expression.count(" OR ") + 1 == 16
+    assert all(f'"Theme {index}"' in expression for index in range(10))
+    assert len(expression) < 1_000
 
 
 def test_fixed_response_parses_normalizes_and_rejects_local_links() -> None:
