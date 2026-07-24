@@ -21,6 +21,12 @@ _LABELS = {
     "REBALANCE": "再平衡参考",
     "REDUCE": "保守减仓参考",
 }
+_STANCE_LABELS = {
+    "BULLISH": "偏多",
+    "BEARISH": "偏空",
+    "MIXED": "多空交织",
+    "UNCERTAIN": "方向不确定",
+}
 
 
 def safe_external_url(value: str) -> str:
@@ -135,8 +141,9 @@ class HTMLReportRenderer:
   {amount}
   {_list(decision.reasons)}
   <h2>综合分析</h2>
-  <p><strong>立场：</strong>{escape(analysis.stance)}
-     / 置信度 {escape(str(analysis.confidence))}</p>
+  <p><strong>综合立场：</strong>{escape(_STANCE_LABELS[analysis.stance])}
+     / 综合可靠度 {escape(str(analysis.confidence))}
+     （表示证据对这段分析的支撑程度，不是上涨概率）</p>
   <p>{escape(analysis.summary)}</p>
   <h3>支持上涨的证据</h3>
   {_list(analysis.bullish_factors)}

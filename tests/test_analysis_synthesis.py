@@ -13,6 +13,7 @@ from sqlalchemy import select
 
 from app.ai.evidence import AIProviderError
 from app.ai.synthesis import (
+    _SYSTEM_PROMPT,
     SYNTHESIS_PROMPT_VERSION,
     AnalysisModelOutput,
     DeepSeekAIProvider,
@@ -23,7 +24,12 @@ from app.ai.synthesis import (
 from app.collectors.safe_http import SafeHTTPClient
 from app.domain.analysis import CausalChain, CausalChainStep
 from app.domain.contracts import AnalysisRequest
-from app.domain.enums import EvidenceDirection, SuggestionLabel
+from app.domain.enums import (
+    EvidenceDirection,
+    SourceKind,
+    SuggestionLabel,
+    TrustTier,
+)
 from app.services.analysis_synthesis import AnalysisSynthesisService
 from app.services.decision import DecisionRunService, DeterministicDecisionPolicy
 from app.services.portfolio import PortfolioService
@@ -60,24 +66,26 @@ def output(*, action: SuggestionLabel = SuggestionLabel.HOLD) -> AnalysisModelOu
     return AnalysisModelOutput(
         stance="MIXED",
         confidence=Decimal("0.9"),
-        summary="Demand is stronger while inventory risk remains unresolved.",
+        summary="需求有所增强，但库存风险仍未消除。",
         bullish_evidence_ids=("evidence-decision-1",),
+        bullish_factors_zh=("需求增强可能支持价格。",),
         bearish_evidence_ids=("evidence-decision-2",),
-        unknowns=("The duration of either effect is not confirmed.",),
+        bearish_factors_zh=("库存风险仍未消除。",),
+        unknowns=("两种影响的持续时间均未得到确认。",),
         causal_chains=(
             CausalChain(
                 steps=(
                     CausalChainStep(
                         evidence_id="evidence-decision-1",
-                        relation="demand may support pricing",
+                        relation="需求可能对价格形成支撑。",
                         confidence=Decimal("0.3"),
                     ),
                 ),
-                conclusion="pricing support is possible",
+                conclusion="价格可能获得一定支撑。",
                 confidence=Decimal("0.3"),
             ),
         ),
-        invalidation_triggers=("A new independent inventory disclosure contradicts the claim.",),
+        invalidation_triggers=("新的独立库存披露与现有说法矛盾。",),
         suggested_action=action,
     )
 
@@ -89,6 +97,34 @@ def test_conflicting_evidence_is_preserved_and_confidence_is_locally_capped() ->
     assert result.bearish_evidence_ids == ("evidence-decision-2",)
     assert result.confidence == Decimal("0.3600")
     assert result.suggested_action is SuggestionLabel.HOLD
+    assert result.bullish_factors == ("需求增强可能支持价格。",)
+    assert result.bearish_factors == ("库存风险仍未消除。",)
+
+
+def test_secondary_only_directional_evidence_caps_reliability_at_035() -> None:
+    value = mixed_context()
+    secondary_scores = tuple(
+        score.model_copy(
+            update={
+                "source_kind": SourceKind.AGGREGATOR,
+                "trust_tier": TrustTier.SECONDARY,
+                "total": Decimal("0.30"),
+            }
+        )
+        for score in value.scores
+    )
+    secondary_context = value.model_copy(update={"scores": secondary_scores})
+    decision = DeterministicDecisionPolicy(decided_at=NOW).evaluate(secondary_context)
+    secondary_request = AnalysisRequest(
+        context=secondary_context,
+        decision=decision,
+        prompt_version=SYNTHESIS_PROMPT_VERSION,
+        analyzed_at=NOW,
+    )
+
+    result = asyncio.run(MockSynthesisProvider(output()).synthesize(secondary_request))
+
+    assert result.confidence == Decimal("0.3500")
 
 
 def test_unknown_reference_and_out_of_bounds_action_are_rejected() -> None:
@@ -120,6 +156,20 @@ def test_provider_payload_excludes_exact_money_and_identity() -> None:
         assert forbidden not in serialized
     assert "portfolio_weight" in serialized
     assert "allowed_actions" in serialized
+    assert payload["language"] == "Simplified Chinese for every user-facing field"
+    assert "Simplified Chinese" in _SYSTEM_PROMPT
+
+
+def test_directional_evidence_requires_one_chinese_factor_each() -> None:
+    with pytest.raises(ValidationError, match="Chinese factor"):
+        AnalysisModelOutput.model_validate(output().model_dump() | {"bullish_factors_zh": ()})
+
+
+def test_user_facing_model_output_rejects_english_text() -> None:
+    with pytest.raises(ValidationError, match="must be Chinese"):
+        AnalysisModelOutput.model_validate(
+            output().model_dump() | {"summary": "English-only summary"}
+        )
 
 
 def test_provider_evidence_payload_has_a_hard_character_budget() -> None:
@@ -159,6 +209,45 @@ def test_large_evidence_set_is_balanced_and_bounded_before_synthesis() -> None:
     assert selected_directions.count("POSITIVE") >= 5
     assert selected_directions.count("NEGATIVE") >= 5
     assert selected_directions.count("NEUTRAL") >= 3
+
+
+def test_synthesis_selects_at_most_one_claim_from_each_document() -> None:
+    value = mixed_context()
+    duplicate = value.evidence[0].model_copy(
+        update={
+            "evidence_id": "duplicate-claim",
+            "draft": value.evidence[0].draft.model_copy(
+                update={"claim": "another claim from the same article"}
+            ),
+        }
+    )
+    duplicate_score = value.scores[0].model_copy(update={"evidence_id": "duplicate-claim"})
+    duplicated = value.model_copy(
+        update={
+            "evidence": (*value.evidence, duplicate),
+            "scores": (*value.scores, duplicate_score),
+        }
+    )
+    decision = DeterministicDecisionPolicy(decided_at=NOW).evaluate(duplicated)
+    selected = _bounded_payload(
+        AnalysisRequest(
+            context=duplicated,
+            decision=decision,
+            prompt_version=SYNTHESIS_PROMPT_VERSION,
+            analyzed_at=NOW,
+        )
+    )["evidence"]
+
+    assert (
+        len(
+            {
+                item.evidence_id
+                for item in duplicated.evidence
+                if item.evidence_id in {entry["evidence_id"] for entry in selected}
+            }
+        )
+        == 2
+    )
 
 
 def test_truncated_synthesis_is_reported_without_retrying_same_limit() -> None:
