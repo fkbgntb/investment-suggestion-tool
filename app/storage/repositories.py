@@ -16,7 +16,13 @@ from sqlalchemy.orm import Session
 from app.domain.collection import FetchFailure, SourceAdapterState, SourceHealthSnapshot
 from app.domain.documents import RawDocument
 from app.domain.enums import TransitionOutcome
-from app.domain.portfolio import Asset, InvestmentProfile, Position, PositionAnalysisSnapshot
+from app.domain.portfolio import (
+    Asset,
+    InvestmentProfile,
+    MarketSnapshot,
+    Position,
+    PositionAnalysisSnapshot,
+)
 from app.domain.state_machine import StateTransitionRecord
 from app.domain.taxonomy import Source, TaxonomyConfiguration
 from app.storage.models import (
@@ -25,6 +31,7 @@ from app.storage.models import (
     AuditEventRow,
     CrawlRunRow,
     InvestmentProfileRow,
+    MarketSnapshotRow,
     PositionRow,
     PositionSnapshotRow,
     RawDocumentRow,
@@ -320,6 +327,66 @@ class PortfolioRepository:
             )
         )
         return PositionAnalysisSnapshot.model_validate(row.payload) if row is not None else None
+
+
+class MarketSnapshotRepository:
+    def __init__(self, session: Session, workspace_id: str) -> None:
+        self.session = session
+        self.workspace_id = workspace_id
+
+    def add_if_absent(self, snapshot: MarketSnapshot) -> tuple[MarketSnapshotRow, bool]:
+        payload = snapshot.model_dump(mode="json")
+        existing = self.session.scalar(
+            select(MarketSnapshotRow).where(
+                MarketSnapshotRow.workspace_id == self.workspace_id,
+                MarketSnapshotRow.asset_id == snapshot.asset_id,
+                MarketSnapshotRow.code == snapshot.code,
+                MarketSnapshotRow.source_id == snapshot.source_id,
+                MarketSnapshotRow.as_of == snapshot.as_of,
+            )
+        )
+        if existing is not None:
+            if existing.payload != payload:
+                raise IdempotencyConflict(
+                    "the market snapshot key was reused with a different payload"
+                )
+            return existing, False
+        snapshot_id = str(
+            uuid5(
+                NAMESPACE_URL,
+                (
+                    f"market:{self.workspace_id}:{snapshot.asset_id}:"
+                    f"{snapshot.code}:{snapshot.source_id}:{snapshot.as_of.isoformat()}"
+                ),
+            )
+        )
+        row = MarketSnapshotRow(
+            market_snapshot_id=snapshot_id,
+            workspace_id=self.workspace_id,
+            asset_id=snapshot.asset_id,
+            source_id=snapshot.source_id,
+            code=snapshot.code,
+            as_of=snapshot.as_of,
+            schema_version=snapshot.schema_version,
+            payload=payload,
+        )
+        self.session.add(row)
+        self.session.flush()
+        return row, True
+
+    def list_for_asset(self, asset_id: str, *, limit: int = 500) -> tuple[MarketSnapshot, ...]:
+        if not 1 <= limit <= 10_000:
+            raise ValueError("market snapshot limit must be between 1 and 10000")
+        rows = self.session.scalars(
+            select(MarketSnapshotRow)
+            .where(
+                MarketSnapshotRow.workspace_id == self.workspace_id,
+                MarketSnapshotRow.asset_id == asset_id,
+            )
+            .order_by(MarketSnapshotRow.as_of.desc())
+            .limit(limit)
+        )
+        return tuple(MarketSnapshot.model_validate(row.payload) for row in rows)
 
 
 class TaxonomyRepository:
@@ -738,7 +805,13 @@ class TaskQueueRepository:
             ).all()
         )
 
-    def mark_succeeded(self, task_id: str, *, finished_at: datetime) -> bool:
+    def mark_succeeded(
+        self,
+        task_id: str,
+        *,
+        finished_at: datetime,
+        result: dict[str, Any] | None = None,
+    ) -> bool:
         row = self.session.scalar(
             select(ScheduledTaskRow).where(
                 ScheduledTaskRow.workspace_id == self.workspace_id,
@@ -750,6 +823,32 @@ class TaskQueueRepository:
             return False
         row.status = "SUCCEEDED"
         row.finished_at = finished_at
+        if result is not None:
+            row.payload = {**row.payload, "result": result}
+        row.updated_at = finished_at
+        self.session.flush()
+        return True
+
+    def mark_failed(
+        self,
+        task_id: str,
+        *,
+        finished_at: datetime,
+        result: dict[str, Any],
+        retryable: bool = True,
+    ) -> bool:
+        row = self.session.scalar(
+            select(ScheduledTaskRow).where(
+                ScheduledTaskRow.workspace_id == self.workspace_id,
+                ScheduledTaskRow.task_id == task_id,
+                ScheduledTaskRow.status == "PENDING",
+            )
+        )
+        if row is None:
+            return False
+        row.status = "RETRYABLE_FAILED" if retryable else "PERMANENT_FAILED"
+        row.finished_at = finished_at
+        row.payload = {**row.payload, "result": result}
         row.updated_at = finished_at
         self.session.flush()
         return True

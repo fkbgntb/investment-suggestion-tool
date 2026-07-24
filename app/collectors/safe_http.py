@@ -76,7 +76,7 @@ class SafeHTTPClient:
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._resolver = resolver or SystemDNSResolver()
-        self._proxy_url = proxy_url
+        self._proxy_url = self._validated_proxy_url(proxy_url)
         self._transport = transport
         self._client: httpx.AsyncClient | None = None
         self._states: dict[str, _SourceState] = {}
@@ -86,7 +86,7 @@ class SafeHTTPClient:
     async def __aenter__(self) -> SafeHTTPClient:
         self._client = httpx.AsyncClient(
             follow_redirects=False,
-            proxy=self._proxy_url,
+            proxy=self._proxy_url if self._transport is None else None,
             transport=self._transport,
         )
         return self
@@ -107,7 +107,7 @@ class SafeHTTPClient:
         await self._wait_for_source_slot(policy)
         try:
             async with asyncio.timeout(policy.total_timeout_seconds):
-                result = await self._fetch_with_redirects(url, policy)
+                result = await self._fetch_with_proxy_retry(url, policy)
         except SafeFetchError as error:
             self._record_failure(policy, error)
             logger.warning(
@@ -130,9 +130,15 @@ class SafeHTTPClient:
             )
             raise error from cause
         except httpx.RequestError as cause:
+            error_code = (
+                FetchErrorCode.PROXY_DNS_NOT_READY
+                if self._proxy_url is not None
+                and isinstance(cause, httpx.ProxyError | httpx.ConnectError)
+                else FetchErrorCode.NETWORK_ERROR
+            )
             error = SafeFetchError(
                 policy.source_id,
-                FetchErrorCode.NETWORK_ERROR,
+                error_code,
                 retryable=True,
             )
             self._record_failure(policy, error)
@@ -241,7 +247,13 @@ class SafeHTTPClient:
             self._record_failure(policy, error)
             raise error from cause
         except httpx.RequestError as cause:
-            error = SafeFetchError(policy.source_id, FetchErrorCode.NETWORK_ERROR, retryable=True)
+            error_code = (
+                FetchErrorCode.PROXY_DNS_NOT_READY
+                if self._proxy_url is not None
+                and isinstance(cause, httpx.ProxyError | httpx.ConnectError)
+                else FetchErrorCode.NETWORK_ERROR
+            )
+            error = SafeFetchError(policy.source_id, error_code, retryable=True)
             self._record_failure(policy, error)
             raise error from cause
 
@@ -343,6 +355,21 @@ class SafeHTTPClient:
                     body=bytes(body),
                 )
 
+    async def _fetch_with_proxy_retry(
+        self,
+        url: str,
+        policy: URLPolicy,
+    ) -> SafeHTTPResponse:
+        attempts = 2 if self._proxy_url is not None else 1
+        for attempt in range(attempts):
+            try:
+                return await self._fetch_with_redirects(url, policy)
+            except (httpx.ProxyError, httpx.ConnectError):
+                if attempt + 1 >= attempts:
+                    raise
+                await asyncio.sleep(0.5)
+        raise AssertionError("proxy retry loop must return or raise")
+
     @staticmethod
     def _status_error_code(status_code: int) -> FetchErrorCode:
         if status_code == 429:
@@ -399,6 +426,8 @@ class SafeHTTPClient:
             literal = ip_address(normalized_host)
             addresses = (str(literal),)
         except ValueError:
+            if self._proxy_url is not None:
+                return
             try:
                 addresses = await self._resolver.resolve(normalized_host, effective_port)
             except (OSError, UnicodeError) as cause:
@@ -428,6 +457,39 @@ class SafeHTTPClient:
                     FetchErrorCode.ADDRESS_REJECTED,
                     retryable=False,
                 )
+
+    @staticmethod
+    def _validated_proxy_url(proxy_url: str | None) -> str | None:
+        if proxy_url is None:
+            return None
+        try:
+            parsed = urlsplit(proxy_url)
+            hostname = parsed.hostname
+            port = parsed.port
+        except ValueError as cause:
+            raise ValueError("collector proxy URL is invalid") from cause
+        if (
+            parsed.scheme.casefold() != "http"
+            or hostname is None
+            or port is None
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path not in {"", "/"}
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError(
+                "collector proxy must be a credential-free local HTTP endpoint with a port"
+            )
+        normalized_host = hostname.rstrip(".").casefold()
+        if normalized_host != "localhost":
+            try:
+                if not ip_address(normalized_host).is_loopback:
+                    raise ValueError("collector proxy must use a loopback address")
+            except ValueError as cause:
+                raise ValueError("collector proxy must use a loopback address") from cause
+        display_host = f"[{normalized_host}]" if ":" in normalized_host else normalized_host
+        return f"http://{display_host}:{port}/"
 
     @staticmethod
     def _host_allowed(hostname: str, policy: URLPolicy) -> bool:

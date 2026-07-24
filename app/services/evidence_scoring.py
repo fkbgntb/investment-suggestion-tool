@@ -11,7 +11,7 @@ from uuid import NAMESPACE_URL, uuid5
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domain.enums import DocumentState, SourceKind, TrustTier
+from app.domain.enums import ContentType, DocumentState, SourceKind, TrustTier
 from app.domain.evidence import Evidence, EvidenceScore
 from app.domain.taxonomy import Source
 from app.storage.models import (
@@ -23,7 +23,7 @@ from app.storage.models import (
     SourceRow,
 )
 
-SCORING_VERSION = "evidence-score-1.0.0"
+SCORING_VERSION = "evidence-score-1.1.0"
 _SOURCE_QUALITY = {
     TrustTier.PRIMARY: Decimal("0.95"),
     TrustTier.PROFESSIONAL: Decimal("0.80"),
@@ -47,6 +47,7 @@ class EvidenceScoringContext:
     published_at: datetime
     independent_source_count: int
     same_origin_reprint: bool
+    content_type: ContentType = ContentType.FACT
 
 
 class EvidenceScorer(Protocol):
@@ -77,6 +78,19 @@ class DeterministicEvidenceScorer:
         elif context.source.kind in {SourceKind.SOCIAL, SourceKind.COMMUNITY}:
             confidence_cap = Decimal("0.15")
             reasons.append("情绪来源应用 0.15 总分上限且不得单独触发动作")
+
+        if context.content_type is ContentType.PRICE_TARGET:
+            source_quality *= Decimal("0.25")
+            confidence_cap = min(confidence_cap or Decimal("1"), Decimal("0.10"))
+            reasons.append("price-target content is opinion, not operating evidence")
+        elif context.content_type is ContentType.ANALYST_OPINION:
+            source_quality *= Decimal("0.50")
+            confidence_cap = min(confidence_cap or Decimal("1"), Decimal("0.20"))
+            reasons.append("analyst opinion receives a reduced evidence weight")
+        elif context.content_type is ContentType.REPRINT:
+            source_quality *= Decimal("0.50")
+            confidence_cap = min(confidence_cap or Decimal("1"), Decimal("0.10"))
+            reasons.append("reprint content cannot create independent confirmation")
 
         if context.same_origin_reprint:
             independence = Decimal("0")
@@ -173,6 +187,7 @@ class EvidenceScoringService:
                     published_at=raw_row.published_at or raw_row.fetched_at,
                     independent_source_count=unique_count,
                     same_origin_reprint=reprint,
+                    content_type=self._content_type(raw_row),
                 ),
                 scored_at=now,
             )
@@ -194,6 +209,34 @@ class EvidenceScoringService:
             negative += evidence.draft.direction.value == "NEGATIVE"
         self.session.flush()
         return len(rows), positive, negative
+
+    @staticmethod
+    def _content_type(raw: RawDocumentRow) -> ContentType:
+        value = raw.metadata_payload.get("content_type")
+        if isinstance(value, str):
+            try:
+                return ContentType(value)
+            except ValueError:
+                pass
+        text = f"{raw.title} {raw.raw_body or ''}".casefold()
+        if any(
+            term in text for term in ("price target", "target price", "upside to", "downside to")
+        ):
+            return ContentType.PRICE_TARGET
+        if any(
+            term in text
+            for term in (
+                "analyst",
+                "wall street",
+                "stock to buy",
+                "forecast",
+                "prediction",
+                "upgrade",
+                "downgrade",
+            )
+        ):
+            return ContentType.ANALYST_OPINION
+        return ContentType.FACT
 
     def _relevance(self, evidence_id: str) -> Decimal:
         runs = self.session.scalars(
@@ -240,9 +283,19 @@ class EvidenceScoringService:
 
         def origin_key(document: RawDocumentRow) -> str:
             configured = source_rows.get(document.source_id)
+            provenance = document.metadata_payload.get("origin_provenance")
+            if isinstance(provenance, dict):
+                original_domain = str(provenance.get("original_domain") or "").casefold().strip()
+                original_publisher = (
+                    str(provenance.get("original_publisher") or "").casefold().strip()
+                )
+                if original_domain:
+                    return f"origin-domain:{original_domain[:253]}"
+                if original_publisher:
+                    return f"origin-publisher:{original_publisher[:300]}"
             author = str(document.metadata_payload.get("author") or "").casefold().strip()
             if configured is not None and configured.kind is SourceKind.AGGREGATOR and author:
-                return f"{document.source_id}:{author[:300]}"
+                return f"origin-publisher:{author[:300]}"
             return document.source_id
 
         first_by_origin: dict[str, str] = {}

@@ -89,6 +89,7 @@ class Settings(BaseSettings):
     deepseek_daily_token_budget: int = Field(default=100_000, ge=1_000, le=10_000_000)
     deepseek_synthesis_max_calls_per_day: int = Field(default=10, ge=1, le=1_000)
     deepseek_synthesis_daily_token_budget: int = Field(default=50_000, ge=1_000, le=10_000_000)
+    deepseek_synthesis_max_output_tokens: int = Field(default=2_400, ge=500, le=8_000)
     deepseek_timeout_seconds: float = Field(default=90, ge=10, le=300)
     backup_passphrase: SecretStr | None = Field(
         default=None,
@@ -137,6 +138,22 @@ class Settings(BaseSettings):
         if not _is_loopback_host(self.host) and not self.allow_public_bind:
             raise ValueError(
                 "non-loopback binding requires INVEST_ALLOW_PUBLIC_BIND=true and a security review"
+            )
+
+        proxy_url = self.collector_proxy_url
+        if proxy_url is not None and (
+            proxy_url.scheme != "http"
+            or proxy_url.host is None
+            or not _is_loopback_host(proxy_url.host)
+            or proxy_url.port is None
+            or proxy_url.username is not None
+            or proxy_url.password is not None
+            or proxy_url.path not in {None, "", "/"}
+            or proxy_url.query is not None
+            or proxy_url.fragment is not None
+        ):
+            raise ValueError(
+                "collector proxy must be a credential-free local HTTP endpoint with a port"
             )
 
         resolved_data_dir = self.data_dir.expanduser().resolve()

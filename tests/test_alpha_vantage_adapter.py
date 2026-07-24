@@ -102,13 +102,15 @@ def test_query_is_bounded_cursor_aware_and_keeps_key_out_of_stored_parameters() 
 
     assert parameters == {
         "function": "NEWS_SENTIMENT",
-        "topics": "technology",
+        "tickers": query.focus_ticker,
         "time_from": "20260720T0100",
         "time_to": "20260720T0300",
         "sort": "LATEST",
         "limit": "50",
     }
     assert "apikey" not in parameters
+    assert query.focus_ticker in {"MU", "TSM", "ASML", "NVDA"}
+    assert "," not in parameters["tickers"]
     assert "local-secret" in query.authenticated_url(SecretStr("local-secret"))
     assert len(query.query_sha256) == 64
 
@@ -134,7 +136,25 @@ def test_response_parses_metadata_and_rejects_local_links() -> None:
     assert str(documents[0].source_url) == "https://news.example.com/story?id=1"
     assert documents[0].metadata["overall_sentiment_label"] == "Somewhat-Bullish"
     assert documents[0].metadata["ticker_sentiment"][0]["ticker"] == "MU"
+    assert documents[0].metadata["origin_provenance"]["original_domain"] == "news.example.com"
+    assert documents[0].metadata["origin_provenance"]["verified_original"] is False
     assert cursor == "2026-07-20T02:30:00Z"
+
+
+def test_query_rotates_one_ticker_per_three_hour_window() -> None:
+    builder = AlphaVantageQueryBuilder()
+    values = []
+    for offset in range(4):
+        value = request().model_copy(
+            update={
+                "since": datetime(2026, 7, 20, offset * 3, tzinfo=UTC),
+                "until": datetime(2026, 7, 20, offset * 3 + 3, tzinfo=UTC),
+            }
+        )
+        query = builder.build(value, max_records=50)
+        values.append(dict(query.parameters)["tickers"])
+    assert set(values) == {"MU", "TSM", "ASML", "NVDA"}
+    assert all("," not in value for value in values)
 
 
 def test_in_band_rate_limit_is_recognizable() -> None:

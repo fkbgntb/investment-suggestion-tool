@@ -51,6 +51,8 @@ class EvidenceView(BaseModel):
 class SourceHealthView(BaseModel):
     source_id: str
     name: str
+    source_role: str
+    source_kind: str
     enabled: bool
     status: SourceHealthStatus
     consecutive_failures: int
@@ -85,6 +87,11 @@ class JobView(BaseModel):
     status: str
     not_before: datetime
     finished_at: datetime | None = None
+    report_outcome: str | None = None
+    report_reason: str | None = None
+    considered_evidence_count: int | None = None
+    new_evidence_count: int | None = None
+    report_id: str | None = None
 
 
 class PublicSettingsView(BaseModel):
@@ -239,7 +246,7 @@ def get_report_html(report_id: str, request: Request) -> HTMLResponse:
         response = HTMLResponse(result[1])
         response.headers["Content-Security-Policy"] = (
             "default-src 'none'; img-src 'none'; style-src 'none'; script-src 'none'; "
-            "frame-src 'none'; base-uri 'none'; form-action 'none'"
+            "frame-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'"
         )
         return response
 
@@ -275,6 +282,8 @@ def source_health(request: Request) -> tuple[SourceHealthView, ...]:
             SourceHealthView(
                 source_id=source.source_id,
                 name=str(source.payload.get("name", source.source_id)),
+                source_role=str(source.payload.get("role") or "NEWS_DISCOVERY"),
+                source_kind=str(source.payload.get("kind") or "UNKNOWN"),
                 enabled=source.enabled,
                 status=(
                     SourceHealthStatus(health.status)
@@ -315,6 +324,36 @@ def jobs(request: Request, limit: int = 100) -> tuple[JobView, ...]:
                 status=row.status,
                 not_before=row.not_before,
                 finished_at=row.finished_at,
+                report_outcome=(
+                    str(row.payload["result"].get("status"))
+                    if isinstance(row.payload.get("result"), dict)
+                    and row.payload["result"].get("status")
+                    else None
+                ),
+                report_reason=(
+                    str(row.payload["result"].get("reason"))
+                    if isinstance(row.payload.get("result"), dict)
+                    and row.payload["result"].get("reason")
+                    else None
+                ),
+                considered_evidence_count=(
+                    int(row.payload["result"].get("considered_evidence_count", 0))
+                    if isinstance(row.payload.get("result"), dict)
+                    and "considered_evidence_count" in row.payload["result"]
+                    else None
+                ),
+                new_evidence_count=(
+                    int(row.payload["result"].get("new_evidence_count", 0))
+                    if isinstance(row.payload.get("result"), dict)
+                    and "new_evidence_count" in row.payload["result"]
+                    else None
+                ),
+                report_id=(
+                    str(row.payload["result"].get("report_id"))
+                    if isinstance(row.payload.get("result"), dict)
+                    and row.payload["result"].get("report_id")
+                    else None
+                ),
             )
             for row in rows
         )

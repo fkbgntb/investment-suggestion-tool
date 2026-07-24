@@ -41,7 +41,7 @@ def build_synthesis_provider(settings: Settings) -> SynthesisProvider:
         model=settings.deepseek_model,
         base_url=str(settings.deepseek_base_url),
         max_input_characters=settings.deepseek_max_input_characters,
-        max_output_tokens=settings.deepseek_max_output_tokens,
+        max_output_tokens=settings.deepseek_synthesis_max_output_tokens,
         timeout_seconds=settings.deepseek_timeout_seconds,
         proxy_url=(str(settings.collector_proxy_url) if settings.collector_proxy_url else None),
     )
@@ -101,8 +101,8 @@ class AnalysisSynthesisService:
                 calls >= self.max_calls_per_day or tokens >= self.daily_token_budget
             )
             if budget_reached:
-                provider = RuleSynthesisProvider()
                 error_code = "DAILY_BUDGET_REACHED"
+                provider = RuleSynthesisProvider(fallback_reason=error_code)
                 budget_fallbacks += 1
             attempted_input_tokens = 0
             attempted_output_tokens = 0
@@ -114,7 +114,7 @@ class AnalysisSynthesisService:
                 error_code = error.code
                 attempted_input_tokens = int(getattr(provider, "last_input_tokens", 0))
                 attempted_output_tokens = int(getattr(provider, "last_output_tokens", 0))
-                result = await RuleSynthesisProvider().synthesize(request)
+                result = await RuleSynthesisProvider(fallback_reason=error_code).synthesize(request)
             completed += 1
             degraded += result.degraded
             if self.provider.provider_name == "deepseek" and not budget_reached:

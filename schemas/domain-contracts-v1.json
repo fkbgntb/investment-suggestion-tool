@@ -423,6 +423,20 @@
       "title": "CausalChainStep",
       "type": "object"
     },
+    "ContentType": {
+      "enum": [
+        "FACT",
+        "FINANCIAL_RESULT",
+        "ANNOUNCEMENT",
+        "MARKET_SNAPSHOT",
+        "ANALYST_OPINION",
+        "PRICE_TARGET",
+        "REPRINT",
+        "SENTIMENT"
+      ],
+      "title": "ContentType",
+      "type": "string"
+    },
     "DecisionContext": {
       "additionalProperties": false,
       "properties": {
@@ -1482,7 +1496,7 @@
     },
     "EvidenceModelOutput": {
       "additionalProperties": false,
-      "description": "Strict JSON object the model may produce; it contains no control fields.",
+      "description": "Strict JSON object the model may produce; provenance remains local control data.",
       "properties": {
         "claims": {
           "items": {
@@ -1547,10 +1561,6 @@
           "title": "Schema Version",
           "type": "string"
         },
-        "source_is_primary": {
-          "title": "Source Is Primary",
-          "type": "boolean"
-        },
         "uncertainties": {
           "items": {
             "type": "string"
@@ -1563,8 +1573,7 @@
       "required": [
         "document_id",
         "relevance",
-        "event_type",
-        "source_is_primary"
+        "event_type"
       ],
       "title": "EvidenceModelOutput",
       "type": "object"
@@ -1970,6 +1979,7 @@
         "HOST_REJECTED",
         "PORT_REJECTED",
         "DNS_FAILED",
+        "PROXY_DNS_NOT_READY",
         "ADDRESS_REJECTED",
         "REDIRECT_REJECTED",
         "REDIRECT_LIMIT",
@@ -2528,6 +2538,30 @@
           "title": "Asset Id",
           "type": "string"
         },
+        "close_price": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Close Price"
+        },
+        "code": {
+          "default": "UNKNOWN",
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
         "daily_change_ratio": {
           "anyOf": [
             {
@@ -2551,6 +2585,24 @@
           "title": "Is Stale",
           "type": "boolean"
         },
+        "maximum_drawdown_ratio": {
+          "anyOf": [
+            {
+              "maximum": 0.0,
+              "minimum": -1.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Drawdown Ratio"
+        },
         "net_asset_value": {
           "anyOf": [
             {
@@ -2560,9 +2612,79 @@
             {
               "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)",
               "type": "string"
+            },
+            {
+              "type": "null"
             }
           ],
+          "default": null,
           "title": "Net Asset Value"
+        },
+        "period_return_ratio": {
+          "anyOf": [
+            {
+              "maximum": 100.0,
+              "minimum": -1.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Period Return Ratio"
+        },
+        "price_book_ratio": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,12}|(?=[\\d.]{1,19}0*$)\\d{0,12}\\.\\d{0,6}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Price Book Ratio"
+        },
+        "price_earnings_ratio": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,12}|(?=[\\d.]{1,19}0*$)\\d{0,12}\\.\\d{0,6}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Price Earnings Ratio"
+        },
+        "sample_count": {
+          "anyOf": [
+            {
+              "maximum": 100000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sample Count"
         },
         "schema_version": {
           "const": "1.0",
@@ -2576,12 +2698,59 @@
           "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
           "title": "Source Id",
           "type": "string"
+        },
+        "split_adjustment_factor": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)",
+              "type": "string"
+            }
+          ],
+          "default": "1",
+          "title": "Split Adjustment Factor"
+        },
+        "volatility_ratio": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,19}0*$)\\d{0,10}\\.\\d{0,8}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volatility Ratio"
+        },
+        "volume": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,24}|(?=[\\d.]{1,29}0*$)\\d{0,24}\\.\\d{0,4}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume"
         }
       },
       "required": [
         "asset_id",
         "as_of",
-        "net_asset_value",
         "source_id"
       ],
       "title": "MarketSnapshot",
@@ -2838,6 +3007,59 @@
         "body"
       ],
       "title": "NotificationMessage",
+      "type": "object"
+    },
+    "OriginProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "content_type": {
+          "$ref": "#/$defs/ContentType"
+        },
+        "discovery_source_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Discovery Source Id",
+          "type": "string"
+        },
+        "original_domain": {
+          "maxLength": 253,
+          "minLength": 1,
+          "title": "Original Domain",
+          "type": "string"
+        },
+        "original_publisher": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Original Publisher",
+          "type": "string"
+        },
+        "original_url": {
+          "format": "uri",
+          "minLength": 1,
+          "title": "Original Url",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "verified_original": {
+          "default": false,
+          "title": "Verified Original",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "discovery_source_id",
+        "original_publisher",
+        "original_domain",
+        "original_url",
+        "content_type"
+      ],
+      "title": "OriginProvenance",
       "type": "object"
     },
     "PortfolioAIRiskSummary": {
@@ -4230,6 +4452,110 @@
       "title": "ReportSource",
       "type": "object"
     },
+    "ReportTriggerOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "actionable_evidence_count": {
+          "default": 0,
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Actionable Evidence Count",
+          "type": "integer"
+        },
+        "completed_at": {
+          "format": "date-time",
+          "title": "Completed At",
+          "type": "string"
+        },
+        "considered_evidence_count": {
+          "default": 0,
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Considered Evidence Count",
+          "type": "integer"
+        },
+        "fingerprint": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "new_evidence_count": {
+          "default": 0,
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "New Evidence Count",
+          "type": "integer"
+        },
+        "reason": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "report_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Report Id"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ReportTriggerStatus"
+        },
+        "task_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "trigger_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Trigger Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trigger_id",
+        "task_id",
+        "status",
+        "reason",
+        "fingerprint",
+        "completed_at"
+      ],
+      "title": "ReportTriggerOutcome",
+      "type": "object"
+    },
+    "ReportTriggerStatus": {
+      "enum": [
+        "GENERATED",
+        "SKIPPED_NO_NEW_EVIDENCE",
+        "SKIPPED_ONLY_AGGREGATOR",
+        "SKIPPED_DATA_EXPIRED",
+        "SKIPPED_POSITION_INCOMPLETE",
+        "FAILED"
+      ],
+      "title": "ReportTriggerStatus",
+      "type": "string"
+    },
     "RiskConstraints": {
       "additionalProperties": false,
       "properties": {
@@ -4591,6 +4917,17 @@
           "minItems": 1,
           "title": "Regions",
           "type": "array"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceRole"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "schema_version": {
           "const": "1.0",
@@ -5023,6 +5360,17 @@
       ],
       "title": "SourceOperationalStatus",
       "type": "object"
+    },
+    "SourceRole": {
+      "enum": [
+        "OFFICIAL_DISCLOSURE",
+        "INDUSTRY_DATA",
+        "MARKET_DATA",
+        "NEWS_DISCOVERY",
+        "SENTIMENT"
+      ],
+      "title": "SourceRole",
+      "type": "string"
     },
     "StateTransitionRecord": {
       "additionalProperties": false,
@@ -5719,6 +6067,9 @@
     "notification_message": {
       "$ref": "#/$defs/NotificationMessage"
     },
+    "origin_provenance": {
+      "$ref": "#/$defs/OriginProvenance"
+    },
     "portfolio_ai_risk_summary": {
       "$ref": "#/$defs/PortfolioAIRiskSummary"
     },
@@ -5766,6 +6117,9 @@
     },
     "report_render_request": {
       "$ref": "#/$defs/ReportRenderRequest"
+    },
+    "report_trigger_outcome": {
+      "$ref": "#/$defs/ReportTriggerOutcome"
     },
     "schema_version": {
       "const": "1.0",
@@ -5843,6 +6197,8 @@
     "position_analysis_snapshot",
     "portfolio_ai_risk_summary",
     "market_snapshot",
+    "origin_provenance",
+    "report_trigger_outcome",
     "quality_metrics",
     "shadow_run_record",
     "topic",

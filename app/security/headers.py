@@ -5,6 +5,15 @@ from collections.abc import Awaitable, Callable
 from fastapi import Request, Response
 
 
+def _is_embeddable_report(request: Request, response: Response) -> bool:
+    path = request.url.path
+    return (
+        response.status_code == 200
+        and path.startswith("/api/v1/reports/")
+        and path.endswith("/html")
+    )
+
+
 async def add_security_headers(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
@@ -18,6 +27,8 @@ async def add_security_headers(
         )
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Frame-Options"] = (
+        "SAMEORIGIN" if _is_embeddable_report(request, response) else "DENY"
+    )
     response.headers["Cache-Control"] = "no-store"
     return response

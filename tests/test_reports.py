@@ -55,6 +55,9 @@ def test_html_renderer_escapes_untrusted_text_and_secures_links() -> None:
     assert "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;" in html
     assert 'rel="noopener noreferrer nofollow"' in html
     assert "javascript:" not in html
+    assert "综合立场：</strong>" in html
+    assert f">{value.analysis.stance}<" not in html
+    assert "不是上涨概率" in html
     assert rendered.content_sha256 == sha256(rendered.content).hexdigest()
 
 

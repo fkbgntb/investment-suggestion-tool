@@ -86,7 +86,7 @@ class EvidenceExtractionRequest(DomainModel):
 
 
 class EvidenceModelOutput(DomainModel):
-    """Strict JSON object the model may produce; it contains no control fields."""
+    """Strict JSON object the model may produce; provenance remains local control data."""
 
     document_id: Identifier
     relevance: UnitInterval
@@ -95,7 +95,6 @@ class EvidenceModelOutput(DomainModel):
     related_entities: tuple[Identifier, ...] = Field(default_factory=tuple, max_length=100)
     claims: tuple[EvidenceDraft, ...] = Field(default_factory=tuple, max_length=50)
     uncertainties: tuple[str, ...] = Field(default_factory=tuple, max_length=50)
-    source_is_primary: bool
 
 
 class EvidenceExtractionResult(DomainModel):

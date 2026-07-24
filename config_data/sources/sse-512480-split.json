@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "sse-512480-split",
+  "name": "上交所 512480 份额拆分公告",
+  "kind": "REGULATOR",
+  "role": "OFFICIAL_DISCLOSURE",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-07-03/512480_20260703_WPHJ.pdf",
+  "regions": ["cn"],
+  "languages": ["zh"],
+  "enabled": true,
+  "adapter_name": "official-document",
+  "crawl_interval_hours": 168,
+  "allow_fulltext": true,
+  "allowed_domains": ["www.sse.com.cn"],
+  "config_version": "1.0"
+}

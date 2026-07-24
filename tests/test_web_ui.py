@@ -122,6 +122,10 @@ def test_local_analysis_api_completes_degraded_report_without_key(tmp_path: Path
             assert html.status_code == 200
             assert "系统不执行交易" in html.text
             assert "script-src 'none'" in html.headers["content-security-policy"]
+            assert "frame-ancestors 'self'" in html.headers["content-security-policy"]
+            assert html.headers["x-frame-options"] == "SAMEORIGIN"
+            health = await client.get("/api/v1/health")
+            assert health.headers["x-frame-options"] == "DENY"
             latest = await client.get("/api/v1/reports/latest")
             assert latest.json()["report_id"] == report_id
         app.state.database.dispose()

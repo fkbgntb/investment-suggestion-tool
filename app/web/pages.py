@@ -72,7 +72,7 @@ def _content(page: str) -> str:
         return """
 <section class="page-title"><p class="eyebrow">运行记录</p><h1>任务</h1></section>
 <section class="panel table-wrap"><table><thead><tr>
-<th>类型</th><th>状态</th><th>计划时间</th><th>完成时间</th></tr></thead>
+<th>类型</th><th>状态</th><th>计划时间</th><th>完成时间</th><th>报告结果</th></tr></thead>
 <tbody id="job-list"></tbody></table></section>
 """
     return """

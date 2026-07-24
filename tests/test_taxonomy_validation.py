@@ -16,7 +16,6 @@ def test_semiconductor_configuration_covers_required_scope_without_fake_holdings
     configuration = load_demo_configuration()
 
     assert len(configuration.topics) == 10
-    assert len(configuration.entities) == 16
     assert len(configuration.influence_relations) == 23
     assert len(configuration.exposures) == 8
     assert {topic.name for topic in configuration.topics} >= {
@@ -32,6 +31,13 @@ def test_semiconductor_configuration_covers_required_scope_without_fake_holdings
         "汽车终端",
     }
     assert {entity.name for entity in configuration.entities} >= {"铜", "硅", "Micron Technology"}
+    entity_ids = {entity.entity_id for entity in configuration.entities}
+    assert {
+        "index.csi-semiconductor",
+        "product.007300",
+        "product.512480",
+        "company.micron",
+    } <= entity_ids
     assert all(exposure.weight is None for exposure in configuration.exposures)
     assert all(
         exposure.data_status is ExposureDataStatus.UNKNOWN for exposure in configuration.exposures

@@ -108,7 +108,8 @@
   "entities": [
     {"entity_id": "commodity.copper", "name": "铜", "entity_type": "COMMODITY", "aliases": ["copper", "铜价"], "enabled": true, "config_version": "semiconductor-1.0.0"},
     {"entity_id": "commodity.silicon", "name": "硅", "entity_type": "COMMODITY", "aliases": ["silicon", "硅材料"], "enabled": true, "config_version": "semiconductor-1.0.0"},
-    {"entity_id": "index.csi-semiconductor", "name": "中证全指半导体产品与设备指数", "entity_type": "INDEX", "aliases": ["中证全指半导体指数"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "index.csi-semiconductor", "name": "中证全指半导体产品与设备指数", "entity_type": "INDEX", "aliases": ["中证全指半导体指数", "H30184"], "enabled": true, "config_version": "semiconductor-1.0.0"},
+    {"entity_id": "product.007300", "name": "国联安中证全指半导体产品与设备ETF联接A", "entity_type": "PRODUCT", "aliases": ["007300", "国联安半导体ETF联接A"], "enabled": true, "config_version": "semiconductor-1.0.0"},
     {"entity_id": "product.512480", "name": "国联安中证全指半导体产品与设备ETF", "entity_type": "PRODUCT", "aliases": ["512480", "半导体ETF"], "enabled": true, "config_version": "semiconductor-1.0.0"},
     {"entity_id": "company.samsung-electronics", "name": "Samsung Electronics", "entity_type": "COMPANY", "aliases": ["三星电子", "Samsung"], "enabled": true, "config_version": "semiconductor-1.0.0"},
     {"entity_id": "company.sk-hynix", "name": "SK hynix", "entity_type": "COMPANY", "aliases": ["SK海力士", "Hynix"], "enabled": true, "config_version": "semiconductor-1.0.0"},

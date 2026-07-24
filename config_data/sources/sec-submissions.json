@@ -3,6 +3,7 @@
   "source_id": "sec-company-filings",
   "name": "U.S. SEC EDGAR company submissions",
   "kind": "REGULATOR",
+  "role": "OFFICIAL_DISCLOSURE",
   "trust_tier": "PRIMARY",
   "base_url": "https://data.sec.gov/submissions/",
   "regions": ["us", "global-issuers"],

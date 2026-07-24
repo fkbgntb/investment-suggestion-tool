@@ -13,6 +13,7 @@ def test_defaults_are_local_and_safe() -> None:
     assert settings.allow_public_bind is False
     assert settings.deepseek_api_key is None
     assert settings.alpha_vantage_api_key is None
+    assert settings.deepseek_synthesis_max_output_tokens == 2_400
 
 
 def test_non_loopback_binding_requires_explicit_acknowledgement() -> None:
@@ -70,3 +71,19 @@ def test_collector_proxy_is_optional_and_typed() -> None:
     assert str(proxied.collector_proxy_url) == "http://127.0.0.1:7897/"
     assert build_safe_http_client(direct)._proxy_url is None
     assert build_safe_http_client(proxied)._proxy_url == "http://127.0.0.1:7897/"
+
+
+@pytest.mark.parametrize(
+    "proxy_url",
+    (
+        "https://127.0.0.1:7897",
+        "http://proxy.example:7897",
+        "http://user:pass@127.0.0.1:7897",
+        "http://127.0.0.1:7897/path",
+    ),
+)
+def test_collector_proxy_rejects_nonlocal_or_credentialed_endpoints(
+    proxy_url: str,
+) -> None:
+    with pytest.raises(ValueError, match="collector proxy"):
+        Settings(_env_file=None, collector_proxy_url=proxy_url)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -72,6 +72,20 @@ class SourceService:
         """Only this method may feed the scheduler; disabled sources are excluded."""
 
         return self.repository.list(enabled_only=True)
+
+    def list_due(self, *, now: datetime) -> tuple[Source, ...]:
+        if now.tzinfo is None:
+            raise ValueError("source due-time evaluation requires a timezone")
+        due: list[Source] = []
+        for source in self.list_schedulable():
+            health = self.repository.get_health(source.source_id)
+            if health is None or health.last_success_at is None:
+                due.append(source)
+                continue
+            interval = timedelta(hours=source.crawl_interval_hours)
+            if health.last_success_at + interval <= now:
+                due.append(source)
+        return tuple(due)
 
     def update(self, source_id: str, replacement: Source) -> Source:
         if source_id != replacement.source_id:

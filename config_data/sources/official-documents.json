@@ -1,0 +1,59 @@
+[
+  {
+    "document_key": "h30184-factsheet",
+    "source_id": "csi-h30184-factsheet",
+    "url": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/indices/detail/files/zh_CN/H30184factsheet.pdf",
+    "title": "中证全指半导体产品与设备指数事实表",
+    "publisher": "中证指数有限公司",
+    "language": "zh",
+    "content_type": "MARKET_SNAPSHOT"
+  },
+  {
+    "document_key": "h30184-methodology",
+    "source_id": "csi-h30184-methodology",
+    "url": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/indices/detail/files/zh_CN/H30184_Index_Methodology_cn.pdf",
+    "title": "中证全指半导体产品与设备指数编制方案",
+    "publisher": "中证指数有限公司",
+    "language": "zh",
+    "content_type": "ANNOUNCEMENT"
+  },
+  {
+    "document_key": "512480-product-overview-20260324",
+    "source_id": "sse-512480-product",
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-24/512480_20260324_KW7A.pdf",
+    "title": "国联安半导体ETF 512480 基金产品资料概要",
+    "publisher": "上海证券交易所与国联安基金管理有限公司",
+    "language": "zh",
+    "content_type": "ANNOUNCEMENT",
+    "published_at": "2026-03-24T00:00:00+08:00"
+  },
+  {
+    "document_key": "512480-split-result-20260703",
+    "source_id": "sse-512480-split",
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-07-03/512480_20260703_WPHJ.pdf",
+    "title": "国联安半导体ETF 512480 基金份额拆分结果公告",
+    "publisher": "上海证券交易所与国联安基金管理有限公司",
+    "language": "zh",
+    "content_type": "ANNOUNCEMENT",
+    "published_at": "2026-07-03T00:00:00+08:00"
+  },
+  {
+    "document_key": "007300-product-overview-20250516",
+    "source_id": "cninfo-007300-product",
+    "url": "https://static.cninfo.com.cn/finalpage/2025-05-16/1223562245.PDF",
+    "title": "007300 A份额基金产品资料概要",
+    "publisher": "中国证监会指定信息披露平台与国联安基金管理有限公司",
+    "language": "zh",
+    "content_type": "ANNOUNCEMENT",
+    "published_at": "2025-05-16T00:00:00+08:00"
+  },
+  {
+    "document_key": "micron-latest-news",
+    "source_id": "micron-ir-news",
+    "url": "https://investors.micron.com/latest-news-english",
+    "title": "Micron Technology investor relations latest news",
+    "publisher": "Micron Technology, Inc.",
+    "language": "en",
+    "content_type": "FINANCIAL_RESULT"
+  }
+]
