@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     deepseek_max_input_characters: int = Field(default=12_000, ge=1_000, le=100_000)
     deepseek_max_output_tokens: int = Field(default=1_200, ge=100, le=8_000)
     deepseek_max_calls_per_day: int = Field(default=20, ge=1, le=1_000)
+    # Separate extraction and synthesis token guards let a local deployment allocate
+    # one total spending envelope without weakening either output-size boundary.
     deepseek_daily_token_budget: int = Field(default=100_000, ge=1_000, le=10_000_000)
     deepseek_synthesis_max_calls_per_day: int = Field(default=10, ge=1, le=1_000)
     deepseek_synthesis_daily_token_budget: int = Field(default=50_000, ge=1_000, le=10_000_000)

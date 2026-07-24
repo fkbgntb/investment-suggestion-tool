@@ -169,7 +169,11 @@ class AnalysisWorkflowService:
             ),
             max_calls_per_day=self.settings.deepseek_synthesis_max_calls_per_day,
             daily_token_budget=self.settings.deepseek_synthesis_daily_token_budget,
-        ).synthesize_pending(now=now)
+        ).synthesize_pending(
+            now=now,
+            limit=1,
+            analysis_run_id=decision_row.analysis_run_id,
+        )
         await ReportService(self.session, self.workspace_id).generate_pending(now=now)
         analysis_row = self.session.scalar(
             select(AnalysisResultRow).where(

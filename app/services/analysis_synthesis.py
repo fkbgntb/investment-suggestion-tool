@@ -67,11 +67,17 @@ class AnalysisSynthesisService:
         self.max_calls_per_day = max_calls_per_day
         self.daily_token_budget = daily_token_budget
 
-    async def synthesize_pending(self, *, now: datetime, limit: int = 10) -> tuple[int, int, int]:
+    async def synthesize_pending(
+        self,
+        *,
+        now: datetime,
+        limit: int = 10,
+        analysis_run_id: str | None = None,
+    ) -> tuple[int, int, int]:
         if now.tzinfo is None:
             raise ValueError("analysis time must include a timezone")
         calls, tokens = self._daily_usage(now)
-        rows = self.session.execute(
+        query = (
             select(AnalysisRunRow, DecisionResultRow)
             .join(
                 DecisionResultRow,
@@ -89,8 +95,11 @@ class AnalysisSynthesisService:
                 AnalysisRunRow.workspace_id == self.workspace_id,
                 AnalysisResultRow.analysis_id.is_(None),
             )
-            .order_by(AnalysisRunRow.created_at, AnalysisRunRow.analysis_run_id)
-            .limit(limit)
+        )
+        if analysis_run_id is not None:
+            query = query.where(AnalysisRunRow.analysis_run_id == analysis_run_id)
+        rows = self.session.execute(
+            query.order_by(AnalysisRunRow.created_at, AnalysisRunRow.analysis_run_id).limit(limit)
         ).all()
         completed = degraded = budget_fallbacks = 0
         for run, decision_row in rows:

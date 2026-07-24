@@ -20,6 +20,8 @@ from app.ai.synthesis import (
     MockSynthesisProvider,
     RuleSynthesisProvider,
     _bounded_payload,
+    _parse_model_output,
+    _validation_error_code,
 )
 from app.collectors.safe_http import SafeHTTPClient
 from app.domain.analysis import CausalChain, CausalChainStep
@@ -33,7 +35,7 @@ from app.domain.enums import (
 from app.services.analysis_synthesis import AnalysisSynthesisService
 from app.services.decision import DecisionRunService, DeterministicDecisionPolicy
 from app.services.portfolio import PortfolioService
-from app.storage.models import AnalysisResultRow, AnalysisRunRow
+from app.storage.models import AnalysisResultRow, AnalysisRunRow, DecisionResultRow
 from tests.domain_factories import investment_profile
 from tests.test_decision_policy import context
 from tests.test_portfolio_service import asset, database, position
@@ -166,10 +168,22 @@ def test_directional_evidence_requires_one_chinese_factor_each() -> None:
 
 
 def test_user_facing_model_output_rejects_english_text() -> None:
-    with pytest.raises(ValidationError, match="must be Chinese"):
+    with pytest.raises(ValidationError, match="must be Chinese") as captured:
         AnalysisModelOutput.model_validate(
             output().model_dump() | {"summary": "English-only summary"}
         )
+    assert _validation_error_code(captured.value) == "NON_CHINESE_SYNTHESIS"
+
+
+def test_model_chain_confidence_is_only_clamped_downward() -> None:
+    payload = output().model_dump(mode="json")
+    payload["causal_chains"][0]["steps"][0]["confidence"] = "0.20"
+    payload["causal_chains"][0]["confidence"] = "0.80"
+
+    parsed = _parse_model_output(json.dumps(payload, ensure_ascii=False))
+
+    assert parsed.causal_chains[0].confidence == Decimal("0.20")
+    assert parsed.causal_chains[0].steps[0].confidence == Decimal("0.20")
 
 
 def test_provider_evidence_payload_has_a_hard_character_budget() -> None:
@@ -293,6 +307,11 @@ def test_rule_fallback_is_explicit_and_never_expands_actions() -> None:
     assert result.stance == "MIXED"
     assert result.suggested_action is request().decision.label
     assert result.uncertainties
+    assert result.bullish_factors == (
+        "证据抽取阶段保存了利多方向标签；由于本次未完成 AI 综合，"
+        "系统不把这些标签展示为可直接采用的语义结论。",
+    )
+    assert "evidence-decision" not in " ".join(result.bullish_factors)
     truncated = asyncio.run(
         RuleSynthesisProvider(fallback_reason="OUTPUT_TRUNCATED").synthesize(request())
     )
@@ -326,6 +345,60 @@ def test_synthesis_service_persists_usage_and_is_idempotent(tmp_path: Path) -> N
             assert row.input_tokens == 100 and row.output_tokens == 80
             assert row.payload["suggested_action"] == SuggestionLabel.HOLD.value
             assert run.payload["status"] == "ANALYZED"
+    finally:
+        db.dispose()
+
+
+def test_synthesis_service_can_target_current_run_without_consuming_backlog(
+    tmp_path: Path,
+) -> None:
+    db = database(tmp_path)
+    try:
+        with db.session() as session:
+            portfolio = PortfolioService(session, "personal-demo")
+            portfolio.create_profile(investment_profile())
+            portfolio.create_asset(asset())
+            portfolio.create_position(position())
+            snapshot = portfolio.create_analysis_snapshot("position-007300", generated_at=NOW)
+            older_context = mixed_context().model_copy(update={"context_id": "older-context"})
+            current_context = mixed_context().model_copy(update={"context_id": "current-context"})
+            older = DecisionRunService(session, "personal-demo").run(
+                older_context,
+                position_snapshot_id=snapshot.snapshot_id,
+                now=NOW,
+            )
+            current = DecisionRunService(session, "personal-demo").run(
+                current_context,
+                position_snapshot_id=snapshot.snapshot_id,
+                now=NOW,
+            )
+            older_row = session.scalar(
+                select(DecisionResultRow).where(DecisionResultRow.decision_id == older.decision_id)
+            )
+            current_row = session.scalar(
+                select(DecisionResultRow).where(
+                    DecisionResultRow.decision_id == current.decision_id
+                )
+            )
+            assert older_row is not None and current_row is not None
+            service = AnalysisSynthesisService(
+                session,
+                "personal-demo",
+                MockSynthesisProvider(output()),
+                model_version="mock-v1",
+            )
+
+            assert asyncio.run(
+                service.synthesize_pending(
+                    now=NOW,
+                    limit=1,
+                    analysis_run_id=current_row.analysis_run_id,
+                )
+            ) == (1, 0, 0)
+
+            analyzed_ids = set(session.scalars(select(AnalysisResultRow.analysis_run_id)).all())
+            assert analyzed_ids == {current_row.analysis_run_id}
+            assert older_row.analysis_run_id not in analyzed_ids
     finally:
         db.dispose()
 
