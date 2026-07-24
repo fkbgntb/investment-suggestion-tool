@@ -13,6 +13,7 @@ def test_defaults_are_local_and_safe() -> None:
     assert settings.allow_public_bind is False
     assert settings.deepseek_api_key is None
     assert settings.alpha_vantage_api_key is None
+    assert settings.deepseek_synthesis_max_output_tokens == 2_400
 
 
 def test_non_loopback_binding_requires_explicit_acknowledgement() -> None:

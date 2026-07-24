@@ -246,7 +246,7 @@ def get_report_html(report_id: str, request: Request) -> HTMLResponse:
         response = HTMLResponse(result[1])
         response.headers["Content-Security-Policy"] = (
             "default-src 'none'; img-src 'none'; style-src 'none'; script-src 'none'; "
-            "frame-src 'none'; base-uri 'none'; form-action 'none'"
+            "frame-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'"
         )
         return response
 

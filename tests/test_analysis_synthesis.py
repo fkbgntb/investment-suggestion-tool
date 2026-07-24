@@ -6,17 +6,21 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
+import httpx
 import pytest
 from pydantic import ValidationError
 from sqlalchemy import select
 
+from app.ai.evidence import AIProviderError
 from app.ai.synthesis import (
     SYNTHESIS_PROMPT_VERSION,
     AnalysisModelOutput,
+    DeepSeekAIProvider,
     MockSynthesisProvider,
     RuleSynthesisProvider,
     _bounded_payload,
 )
+from app.collectors.safe_http import SafeHTTPClient
 from app.domain.analysis import CausalChain, CausalChainStep
 from app.domain.contracts import AnalysisRequest
 from app.domain.enums import EvidenceDirection, SuggestionLabel
@@ -29,6 +33,12 @@ from tests.test_decision_policy import context
 from tests.test_portfolio_service import asset, database, position
 
 NOW = datetime(2026, 7, 20, 12, tzinfo=UTC)
+
+
+class StaticResolver:
+    async def resolve(self, hostname: str, port: int) -> tuple[str, ...]:
+        assert (hostname, port) == ("api.deepseek.com", 443)
+        return ("93.184.216.34",)
 
 
 def mixed_context():
@@ -121,12 +131,83 @@ def test_provider_evidence_payload_has_a_hard_character_budget() -> None:
     assert encoded_entries <= 700
 
 
+def test_large_evidence_set_is_balanced_and_bounded_before_synthesis() -> None:
+    directions = (
+        *(EvidenceDirection.POSITIVE for _ in range(25)),
+        *(EvidenceDirection.NEGATIVE for _ in range(25)),
+        *(EvidenceDirection.NEUTRAL for _ in range(12)),
+    )
+    value = context(tuple(directions))
+    decision = DeterministicDecisionPolicy(decided_at=NOW).evaluate(value)
+    large_request = AnalysisRequest(
+        context=value,
+        decision=decision,
+        prompt_version=SYNTHESIS_PROMPT_VERSION,
+        analyzed_at=NOW,
+    )
+
+    payload = _bounded_payload(large_request, max_evidence_characters=100_000)
+    selected = payload["evidence"]
+    selected_directions = [item["direction"] for item in selected]
+
+    assert len(selected) == 16
+    assert payload["evidence_selection"] == {
+        "total_valid_evidence": 62,
+        "selected_for_synthesis": 16,
+        "maximum_selected": 16,
+    }
+    assert selected_directions.count("POSITIVE") >= 5
+    assert selected_directions.count("NEGATIVE") >= 5
+    assert selected_directions.count("NEUTRAL") >= 3
+
+
+def test_truncated_synthesis_is_reported_without_retrying_same_limit() -> None:
+    calls = 0
+
+    async def handler(_: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            200,
+            json={
+                "model": "deepseek-v4-flash",
+                "choices": [
+                    {
+                        "finish_reason": "length",
+                        "message": {"content": '{"stance":"MIXED"', "tool_calls": None},
+                    }
+                ],
+                "usage": {"prompt_tokens": 4000, "completion_tokens": 2400},
+            },
+        )
+
+    async def scenario() -> None:
+        async with SafeHTTPClient(
+            resolver=StaticResolver(), transport=httpx.MockTransport(handler)
+        ) as client:
+            provider = DeepSeekAIProvider(
+                credential="test",
+                client=client,
+                max_output_tokens=2_400,
+            )
+            with pytest.raises(AIProviderError, match="OUTPUT_TRUNCATED"):
+                await provider.synthesize(request())
+            assert provider.last_output_tokens == 2_400
+
+    asyncio.run(scenario())
+    assert calls == 1
+
+
 def test_rule_fallback_is_explicit_and_never_expands_actions() -> None:
     result = asyncio.run(RuleSynthesisProvider().synthesize(request()))
     assert result.degraded is True
     assert result.stance == "MIXED"
     assert result.suggested_action is request().decision.label
     assert result.uncertainties
+    truncated = asyncio.run(
+        RuleSynthesisProvider(fallback_reason="OUTPUT_TRUNCATED").synthesize(request())
+    )
+    assert "输出达到长度上限" in truncated.summary
 
 
 def test_synthesis_service_persists_usage_and_is_idempotent(tmp_path: Path) -> None:
