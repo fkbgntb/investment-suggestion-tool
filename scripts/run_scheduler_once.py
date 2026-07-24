@@ -17,6 +17,7 @@ from app.services.evidence_extraction import EvidenceExtractionService, build_ev
 from app.services.evidence_scoring import EvidenceScoringService
 from app.services.gdelt_collection import GDELTCollectionService
 from app.services.normalization import NormalizationService
+from app.services.official_document_collection import OfficialDocumentCollectionService
 from app.services.relevance import RelevanceService
 from app.services.report_triggers import ReportTriggerBatch, ScheduledReportTriggerService
 from app.services.scheduler import DurableJobScheduler, WindowCollectionResult
@@ -48,7 +49,7 @@ async def run(*, force: bool = False) -> int:
                         session,
                         settings.portfolio_workspace_id,
                         build_default_adapter_registry(),
-                    ).list_schedulable()
+                    ).list_due(now=until)
                 created_count = 0
                 failed_count = 0
                 for source in sources:
@@ -88,6 +89,12 @@ async def run(*, force: bool = False) -> int:
                                     load_sec_companies(),
                                     contact_email=settings.sec_contact_email,
                                     max_filings_per_company=(settings.sec_max_filings_per_company),
+                                ).run(source.source_id, since=since, until=until)
+                            elif source.adapter_name == "official-document":
+                                outcome = await OfficialDocumentCollectionService(
+                                    session,
+                                    settings.portfolio_workspace_id,
+                                    http_client,
                                 ).run(source.source_id, since=since, until=until)
                             else:
                                 failed_count += 1

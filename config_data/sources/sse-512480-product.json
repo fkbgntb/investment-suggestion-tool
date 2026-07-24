@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "sse-512480-product",
+  "name": "上交所 512480 产品资料",
+  "kind": "REGULATOR",
+  "role": "OFFICIAL_DISCLOSURE",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-24/512480_20260324_KW7A.pdf",
+  "regions": ["cn"],
+  "languages": ["zh"],
+  "enabled": true,
+  "adapter_name": "official-document",
+  "crawl_interval_hours": 24,
+  "allow_fulltext": true,
+  "allowed_domains": ["www.sse.com.cn"],
+  "config_version": "1.0"
+}

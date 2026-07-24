@@ -67,8 +67,10 @@ from app.domain.portfolio import (
     PurchaseLot,
     RedemptionFeeTier,
 )
+from app.domain.provenance import OriginProvenance
 from app.domain.quality import QualityMetrics, ShadowRunRecord
 from app.domain.relevance import HumanRelevanceLabel, RelevanceAssessment, RelevanceRuleHit
+from app.domain.report_triggers import ReportTriggerOutcome
 from app.domain.state_machine import StateTransitionRecord
 from app.domain.taxonomy import (
     Entity,
@@ -100,6 +102,8 @@ class DomainContractBundle(DomainModel):
     position_analysis_snapshot: PositionAnalysisSnapshot
     portfolio_ai_risk_summary: PortfolioAIRiskSummary
     market_snapshot: MarketSnapshot
+    origin_provenance: OriginProvenance
+    report_trigger_outcome: ReportTriggerOutcome
     quality_metrics: QualityMetrics
     shadow_run_record: ShadowRunRecord
     topic: Topic

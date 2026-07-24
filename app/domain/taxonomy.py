@@ -13,6 +13,7 @@ from app.domain.enums import (
     ExposureKind,
     InfluenceDirection,
     SourceKind,
+    SourceRole,
     TaxonomyNodeKind,
     TopicCategory,
     TrustTier,
@@ -212,6 +213,7 @@ class Source(DomainModel):
     source_id: Identifier
     name: str = Field(min_length=1, max_length=160)
     kind: SourceKind
+    role: SourceRole | None = None
     trust_tier: TrustTier
     base_url: AnyHttpUrl
     regions: tuple[str, ...] = Field(min_length=1, max_length=50)
@@ -271,4 +273,16 @@ class Source(DomainModel):
         base_host = (self.base_url.host or "").encode("idna").decode("ascii").casefold()
         if base_host not in self.allowed_domains:
             raise ValueError("the base URL host must be explicitly allowed")
+        if self.role is None:
+            inferred = {
+                SourceKind.OFFICIAL: SourceRole.OFFICIAL_DISCLOSURE,
+                SourceKind.REGULATOR: SourceRole.OFFICIAL_DISCLOSURE,
+                SourceKind.FUND_MANAGER: SourceRole.OFFICIAL_DISCLOSURE,
+                SourceKind.COMPANY_OFFICIAL: SourceRole.OFFICIAL_DISCLOSURE,
+                SourceKind.MARKET_DATA: SourceRole.MARKET_DATA,
+                SourceKind.RESEARCH: SourceRole.INDUSTRY_DATA,
+                SourceKind.SOCIAL: SourceRole.SENTIMENT,
+                SourceKind.COMMUNITY: SourceRole.SENTIMENT,
+            }.get(self.kind, SourceRole.NEWS_DISCOVERY)
+            object.__setattr__(self, "role", inferred)
         return self

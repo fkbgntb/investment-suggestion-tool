@@ -3,6 +3,7 @@
   "source_id": "gdelt-global-news",
   "name": "GDELT DOC 2.0",
   "kind": "AGGREGATOR",
+  "role": "NEWS_DISCOVERY",
   "trust_tier": "SECONDARY",
   "base_url": "https://api.gdeltproject.org/api/v2/doc/doc",
   "regions": ["global"],

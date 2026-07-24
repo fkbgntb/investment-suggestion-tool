@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "csi-h30184-factsheet",
+  "name": "中证 H30184 官方事实表",
+  "kind": "OFFICIAL",
+  "role": "MARKET_DATA",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/indices/detail/files/zh_CN/H30184factsheet.pdf",
+  "regions": ["cn"],
+  "languages": ["zh"],
+  "enabled": true,
+  "adapter_name": "official-document",
+  "crawl_interval_hours": 24,
+  "allow_fulltext": true,
+  "allowed_domains": ["oss-ch.csindex.com.cn"],
+  "config_version": "1.0"
+}

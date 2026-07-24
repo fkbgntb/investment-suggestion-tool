@@ -51,6 +51,8 @@ class EvidenceView(BaseModel):
 class SourceHealthView(BaseModel):
     source_id: str
     name: str
+    source_role: str
+    source_kind: str
     enabled: bool
     status: SourceHealthStatus
     consecutive_failures: int
@@ -280,6 +282,8 @@ def source_health(request: Request) -> tuple[SourceHealthView, ...]:
             SourceHealthView(
                 source_id=source.source_id,
                 name=str(source.payload.get("name", source.source_id)),
+                source_role=str(source.payload.get("role") or "NEWS_DISCOVERY"),
+                source_kind=str(source.payload.get("kind") or "UNKNOWN"),
                 enabled=source.enabled,
                 status=(
                     SourceHealthStatus(health.status)

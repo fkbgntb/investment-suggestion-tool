@@ -3,6 +3,7 @@
   "source_id": "alpha-vantage-news",
   "name": "Alpha Vantage News & Sentiment",
   "kind": "AGGREGATOR",
+  "role": "NEWS_DISCOVERY",
   "trust_tier": "SECONDARY",
   "base_url": "https://www.alphavantage.co/query",
   "regions": ["global"],

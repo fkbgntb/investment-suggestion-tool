@@ -213,8 +213,37 @@ class PortfolioAIRiskSummary(DomainModel):
 
 class MarketSnapshot(DomainModel):
     asset_id: Identifier
+    code: str = Field(default="UNKNOWN", min_length=1, max_length=32)
     as_of: AwareDatetime
-    net_asset_value: Decimal = Field(gt=0, max_digits=18, decimal_places=8)
+    net_asset_value: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=8)
+    close_price: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=8)
+    volume: Decimal | None = Field(default=None, ge=0, max_digits=28, decimal_places=4)
+    sample_count: int | None = Field(default=None, ge=1, le=100_000)
     daily_change_ratio: SignedRatio | None = None
+    period_return_ratio: Decimal | None = Field(default=None, ge=Decimal("-1"), le=Decimal("100"))
+    price_earnings_ratio: Decimal | None = Field(
+        default=None, gt=0, max_digits=18, decimal_places=6
+    )
+    price_book_ratio: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=6)
+    volatility_ratio: Decimal | None = Field(default=None, ge=0, max_digits=18, decimal_places=8)
+    maximum_drawdown_ratio: Decimal | None = Field(default=None, ge=Decimal("-1"), le=0)
+    split_adjustment_factor: Decimal = Field(
+        default=Decimal("1"), gt=0, max_digits=18, decimal_places=8
+    )
     source_id: Identifier
     is_stale: bool = False
+
+    @model_validator(mode="after")
+    def at_least_one_market_value_is_required(self) -> MarketSnapshot:
+        observed = (
+            self.net_asset_value,
+            self.close_price,
+            self.volume,
+            self.sample_count,
+            self.price_earnings_ratio,
+            self.price_book_ratio,
+            self.volatility_ratio,
+        )
+        if all(value is None for value in observed):
+            raise ValueError("a market snapshot requires at least one observed market value")
+        return self

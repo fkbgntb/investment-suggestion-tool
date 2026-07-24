@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "micron-ir-news",
+  "name": "Micron 官方投资者关系新闻",
+  "kind": "COMPANY_OFFICIAL",
+  "role": "OFFICIAL_DISCLOSURE",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://investors.micron.com/latest-news-english",
+  "regions": ["us"],
+  "languages": ["en"],
+  "enabled": true,
+  "adapter_name": "official-document",
+  "crawl_interval_hours": 3,
+  "allow_fulltext": true,
+  "allowed_domains": ["investors.micron.com"],
+  "config_version": "1.0"
+}

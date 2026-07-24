@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "csi-h30184-methodology",
+  "name": "中证 H30184 官方编制方案",
+  "kind": "OFFICIAL",
+  "role": "OFFICIAL_DISCLOSURE",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/indices/detail/files/zh_CN/H30184_Index_Methodology_cn.pdf",
+  "regions": ["cn"],
+  "languages": ["zh"],
+  "enabled": true,
+  "adapter_name": "official-document",
+  "crawl_interval_hours": 168,
+  "allow_fulltext": true,
+  "allowed_domains": ["oss-ch.csindex.com.cn"],
+  "config_version": "1.0"
+}

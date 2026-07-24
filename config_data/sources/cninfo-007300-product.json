@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_id": "cninfo-007300-product",
+  "name": "007300 官方产品资料基线",
+  "kind": "REGULATOR",
+  "role": "OFFICIAL_DISCLOSURE",
+  "trust_tier": "PRIMARY",
+  "base_url": "https://static.cninfo.com.cn/finalpage/2025-05-16/1223562245.PDF",
+  "regions": ["cn"],
+  "languages": ["zh"],
+  "enabled": true,
+  "adapter_name": "official-document",
+  "crawl_interval_hours": 168,
+  "allow_fulltext": true,
+  "allowed_domains": ["static.cninfo.com.cn"],
+  "config_version": "1.0"
+}

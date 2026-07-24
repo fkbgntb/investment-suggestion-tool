@@ -25,6 +25,7 @@ class ReportTriggerBatch:
     generated: int = 0
     skipped: int = 0
     failed: int = 0
+    outcomes: tuple[ReportTriggerOutcome, ...] = ()
 
 
 class ScheduledReportTriggerService:
@@ -45,6 +46,7 @@ class ScheduledReportTriggerService:
             raise ValueError("report trigger time must include a timezone")
         normalized_now = now.astimezone(UTC)
         generated = skipped = failed = 0
+        outcomes: list[ReportTriggerOutcome] = []
         for task_type in ("process-new-documents", "daily-summary"):
             tasks = self.tasks.list_due(task_type, now=normalized_now)
             for task in tasks:
@@ -64,6 +66,7 @@ class ScheduledReportTriggerService:
                         result=outcome.model_dump(mode="json"),
                     )
                     failed += 1
+                    outcomes.append(outcome)
                     continue
                 self.tasks.mark_succeeded(
                     task.task_id,
@@ -74,7 +77,13 @@ class ScheduledReportTriggerService:
                     generated += 1
                 else:
                     skipped += 1
-        return ReportTriggerBatch(generated=generated, skipped=skipped, failed=failed)
+                outcomes.append(outcome)
+        return ReportTriggerBatch(
+            generated=generated,
+            skipped=skipped,
+            failed=failed,
+            outcomes=tuple(outcomes),
+        )
 
     async def _consume(
         self,

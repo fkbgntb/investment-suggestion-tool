@@ -37,4 +37,12 @@ class AdapterRegistry:
 
 def build_default_adapter_registry() -> AdapterRegistry:
     # Names are a code-owned whitelist; source rows cannot import arbitrary adapters.
-    return AdapterRegistry(("alpha-vantage-news", "gdelt-doc", "mock-rss", "sec-submissions"))
+    return AdapterRegistry(
+        (
+            "alpha-vantage-news",
+            "gdelt-doc",
+            "mock-rss",
+            "official-document",
+            "sec-submissions",
+        )
+    )

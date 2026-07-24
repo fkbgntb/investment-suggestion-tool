@@ -186,6 +186,44 @@ class PositionSnapshotRow(WorkspaceScopedMixin, Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
 
 
+class MarketSnapshotRow(SnapshotMixin, Base):
+    __tablename__ = "market_snapshots"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "asset_id"],
+            ["assets.workspace_id", "assets.asset_id"],
+            ondelete="CASCADE",
+            name="fk_market_snapshots_workspace_asset",
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "source_id"],
+            ["sources.workspace_id", "sources.source_id"],
+            ondelete="CASCADE",
+            name="fk_market_snapshots_workspace_source",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "asset_id",
+            "code",
+            "source_id",
+            "as_of",
+            name="uq_market_snapshots_workspace_asset_code_source_date",
+        ),
+        Index(
+            "ix_market_snapshots_workspace_asset_date",
+            "workspace_id",
+            "asset_id",
+            "as_of",
+        ),
+    )
+
+    market_snapshot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    asset_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    code: Mapped[str] = mapped_column(String(32), nullable=False)
+    as_of: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+
+
 class ImmutableSnapshotError(RuntimeError):
     """Position analysis snapshots are append-only application records."""
 

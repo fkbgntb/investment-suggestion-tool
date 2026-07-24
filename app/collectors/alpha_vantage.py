@@ -27,7 +27,8 @@ from app.domain.documents import (
     RawDocument,
     RawDocumentControl,
 )
-from app.domain.enums import DocumentState
+from app.domain.enums import ContentType, DocumentState
+from app.domain.provenance import OriginProvenance
 
 ALPHA_VANTAGE_ENDPOINT = "https://www.alphavantage.co/query"
 _PUBLISHED_TIME = "%Y%m%dT%H%M%S"
@@ -37,6 +38,18 @@ _RATE_LIMIT_MARKERS = (
     "call frequency",
     "requests per day",
     "api call frequency",
+)
+_FOCUS_TICKERS = ("MU", "TSM", "ASML", "NVDA")
+_PRICE_TARGET_TERMS = ("price target", "target price", "upside to", "downside to")
+_ANALYST_TERMS = (
+    "analyst",
+    "wall street",
+    "stock to buy",
+    "forecast",
+    "prediction",
+    "rating",
+    "upgrade",
+    "downgrade",
 )
 
 
@@ -57,6 +70,7 @@ class AlphaVantageQuery:
     parameters: tuple[tuple[str, str], ...]
     query_sha256: str
     effective_since: datetime
+    focus_ticker: str
 
     def authenticated_url(self, api_key: SecretStr) -> str:
         values = [*self.parameters, ("apikey", api_key.get_secret_value())]
@@ -74,9 +88,11 @@ class AlphaVantageQueryBuilder:
         if effective_since > until:
             raise ValueError("Alpha Vantage cursor cannot follow the request end time")
 
+        slot = int(effective_since.timestamp()) // (3 * 60 * 60)
+        focus_ticker = _FOCUS_TICKERS[slot % len(_FOCUS_TICKERS)]
         parameters = (
             ("function", "NEWS_SENTIMENT"),
-            ("topics", "technology"),
+            ("tickers", focus_ticker),
             ("time_from", effective_since.strftime("%Y%m%dT%H%M")),
             ("time_to", until.strftime("%Y%m%dT%H%M")),
             ("sort", "LATEST"),
@@ -87,6 +103,7 @@ class AlphaVantageQueryBuilder:
             parameters=parameters,
             query_sha256=sha256(digest_input).hexdigest(),
             effective_since=effective_since,
+            focus_ticker=focus_ticker,
         )
 
     @staticmethod
@@ -121,10 +138,12 @@ class AlphaVantageAdapter:
         self.last_query_sha256: str | None = None
         self.last_result_count = 0
         self.last_truncated = False
+        self.last_focus_ticker: str | None = None
 
     async def discover(self, request: SourceDiscoveryRequest) -> SourceDiscoveryResult:
         query = self._query_builder.build(request, max_records=self._max_records)
         self.last_query_sha256 = query.query_sha256
+        self.last_focus_ticker = query.focus_ticker
         response = await self._http.fetch(
             query.authenticated_url(self._api_key),
             self.url_policy(request.source_id),
@@ -218,9 +237,26 @@ class AlphaVantageAdapter:
         published_at = cls._parse_published_time(raw.get("time_published"))
         summary = cls._bounded_text(raw.get("summary"), 20_000)
         publisher = cls._bounded_text(raw.get("source"), 300)
+        original_domain = cls._bounded_text(raw.get("source_domain"), 253)
+        if original_domain is None:
+            original_domain = (urlsplit(url).hostname or "").casefold()
+        content_type = cls._content_type(title, summary)
+        try:
+            provenance = OriginProvenance(
+                discovery_source_id=source_id,
+                original_publisher=publisher or original_domain,
+                original_domain=original_domain,
+                original_url=url,
+                verified_original=False,
+                content_type=content_type,
+            )
+        except ValidationError:
+            return None
         metadata = {
             "provider": "alpha_vantage",
-            "source_domain": cls._bounded_text(raw.get("source_domain"), 300),
+            "source_domain": original_domain,
+            "origin_provenance": provenance.model_dump(mode="json"),
+            "content_type": content_type.value,
             "overall_sentiment_score": cls._bounded_text(raw.get("overall_sentiment_score"), 40),
             "overall_sentiment_label": cls._bounded_text(raw.get("overall_sentiment_label"), 100),
             "topics": cls._bounded_scores(raw.get("topics"), name_key="topic"),
@@ -279,6 +315,15 @@ class AlphaVantageAdapter:
             return datetime.strptime(value, _PUBLISHED_TIME).replace(tzinfo=UTC)
         except ValueError:
             return None
+
+    @staticmethod
+    def _content_type(title: str, summary: str | None) -> ContentType:
+        value = f"{title} {summary or ''}".casefold()
+        if any(term in value for term in _PRICE_TARGET_TERMS):
+            return ContentType.PRICE_TARGET
+        if any(term in value for term in _ANALYST_TERMS):
+            return ContentType.ANALYST_OPINION
+        return ContentType.FACT
 
     @staticmethod
     def _normalize_untrusted_url(value: object) -> str | None:

@@ -29,6 +29,7 @@ def raw_document(
     body: str,
     *,
     discovered_at: datetime,
+    source_id: str = "source-news",
 ) -> RawDocument:
     digest = sha256(f"{document_id}:{body}".encode()).hexdigest()
     return RawDocument(
@@ -41,7 +42,7 @@ def raw_document(
         ),
         control=RawDocumentControl(
             document_id=document_id,
-            source_id="source-news",
+            source_id=source_id,
             state=DocumentState.FETCHED,
             state_version=1,
             content_sha256=digest,

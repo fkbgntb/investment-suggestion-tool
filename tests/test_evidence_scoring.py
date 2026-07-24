@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.ai.evidence import MockAIProvider
 from app.domain.enums import (
     AssetType,
+    ContentType,
     DocumentState,
     EvidenceDirection,
     SourceKind,
@@ -77,6 +78,7 @@ def context(
     published_at: datetime = NOW,
     independent_sources: int = 1,
     reprint: bool = False,
+    content_type: ContentType = ContentType.FACT,
 ) -> EvidenceScoringContext:
     return EvidenceScoringContext(
         evidence=evidence(),
@@ -85,6 +87,7 @@ def context(
         published_at=published_at,
         independent_source_count=independent_sources,
         same_origin_reprint=reprint,
+        content_type=content_type,
     )
 
 
@@ -124,6 +127,24 @@ def test_fifty_same_origin_reprints_add_no_independent_weight() -> None:
     assert scores[0].total > 0
     assert all(item.independence == 0 and item.total == 0 for item in scores[1:])
     assert sum(item.total for item in scores) == scores[0].total
+
+
+def test_analyst_opinion_and_price_target_are_lower_than_reported_fact() -> None:
+    scorer = DeterministicEvidenceScorer()
+    configured = source(SourceKind.AGGREGATOR, TrustTier.SECONDARY)
+    fact = scorer.score(context(configured), scored_at=NOW)
+    opinion = scorer.score(
+        context(configured, content_type=ContentType.ANALYST_OPINION),
+        scored_at=NOW,
+    )
+    target = scorer.score(
+        context(configured, content_type=ContentType.PRICE_TARGET),
+        scored_at=NOW,
+    )
+
+    assert fact.total > opinion.total > target.total
+    assert opinion.confidence_cap == Decimal("0.2000")
+    assert target.confidence_cap == Decimal("0.1000")
 
 
 def test_extreme_total_cannot_override_a_weak_component() -> None:
@@ -177,7 +198,7 @@ def test_scoring_service_persists_components_and_updates_state(tmp_path: Path) -
             assert EvidenceScoringService(session, "personal").score_pending(now=NOW) == (1, 1, 0)
             score = session.scalar(select(EvidenceScoreRow))
             assert score is not None
-            assert score.payload["scoring_version"] == "evidence-score-1.0.0"
+            assert score.payload["scoring_version"] == "evidence-score-1.1.0"
             assert score.payload["component_reasons"]
             raw = session.scalar(
                 select(RawDocumentRow).where(RawDocumentRow.document_id == "doc-ai")

@@ -54,10 +54,26 @@ def _install_processing_fakes(monkeypatch, *, relevance_raises: bool = False) ->
         def score_pending(self, *, now):
             return (2, 0)
 
+    class FakeTaskQueue:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def enqueue(self, **kwargs):
+            return True
+
+    class FakeReportTrigger:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def consume_due(self, *, now):
+            return SimpleNamespace(generated=0, skipped=0, failed=0, outcomes=())
+
     monkeypatch.setattr(manual_pipeline, "NormalizationService", FakeNormalization)
     monkeypatch.setattr(manual_pipeline, "RelevanceService", FakeRelevance)
     monkeypatch.setattr(manual_pipeline, "EvidenceExtractionService", FakeExtraction)
     monkeypatch.setattr(manual_pipeline, "EvidenceScoringService", FakeScoring)
+    monkeypatch.setattr(manual_pipeline, "TaskQueueRepository", FakeTaskQueue)
+    monkeypatch.setattr(manual_pipeline, "ScheduledReportTriggerService", FakeReportTrigger)
     monkeypatch.setattr(manual_pipeline, "build_evidence_provider", lambda settings: object())
     monkeypatch.setattr(
         manual_pipeline, "build_safe_http_client", lambda settings: FakeHttpClient()
@@ -115,6 +131,11 @@ def test_manual_pipeline_isolates_sources_and_processes_pending(monkeypatch, tmp
         "extraction_count": 2,
         "extraction_review_count": 1,
         "scored_count": 2,
+        "report_generated_count": 0,
+        "report_skipped_count": 0,
+        "report_failed_count": 0,
+        "report_outcome": None,
+        "report_reason": None,
     }
 
 

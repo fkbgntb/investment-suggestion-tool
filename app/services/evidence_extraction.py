@@ -8,7 +8,7 @@ from hashlib import sha256
 from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from app.ai.evidence import (
@@ -18,6 +18,7 @@ from app.ai.evidence import (
     RuleEvidenceProvider,
     detect_prompt_injection,
 )
+from app.ai.official_evidence import extract_official_facts
 from app.config import Settings
 from app.domain.contracts import AIProvider
 from app.domain.documents import NormalizedDocument
@@ -75,8 +76,6 @@ class EvidenceExtractionService:
 
     async def extract_pending(self, *, now: datetime, limit: int = 10) -> tuple[int, int, int]:
         calls, tokens = self._daily_usage(now)
-        if calls >= self.max_calls_per_day or tokens >= self.daily_token_budget:
-            return 0, 0, 1
         taxonomy = TaxonomyRepository(self.session, self.workspace_id).get_active()
         if taxonomy is None:
             return 0, 0, 0
@@ -96,9 +95,8 @@ class EvidenceExtractionService:
                 AIExtractionRunRow,
                 (AIExtractionRunRow.workspace_id == NormalizedDocumentRow.workspace_id)
                 & (AIExtractionRunRow.document_id == NormalizedDocumentRow.document_id)
-                & (AIExtractionRunRow.provider_name == self.provider.provider_name)
-                & (AIExtractionRunRow.model_version == self.model_version)
-                & (AIExtractionRunRow.prompt_version == self.prompt_version),
+                & (AIExtractionRunRow.prompt_version == self.prompt_version)
+                & (AIExtractionRunRow.status == "SUCCEEDED"),
             )
             .where(
                 NormalizedDocumentRow.workspace_id == self.workspace_id,
@@ -108,17 +106,47 @@ class EvidenceExtractionService:
                 RelevanceAssessmentRow.taxonomy_version == taxonomy.config_version,
                 AIExtractionRunRow.extraction_run_id.is_(None),
             )
-            .order_by(NormalizedDocumentRow.normalized_at, NormalizedDocumentRow.document_id)
+            .order_by(
+                case(
+                    (
+                        SourceRow.payload["kind"]
+                        .as_string()
+                        .in_(
+                            (
+                                "OFFICIAL",
+                                "REGULATOR",
+                                "FUND_MANAGER",
+                                "COMPANY_OFFICIAL",
+                            )
+                        ),
+                        0,
+                    ),
+                    else_=1,
+                ),
+                NormalizedDocumentRow.normalized_at,
+                NormalizedDocumentRow.document_id,
+            )
             .limit(limit)
         ).all()
         succeeded = failed = 0
         for normalized_row, assessment_row, source_row in rows:
-            if calls >= self.max_calls_per_day or tokens >= self.daily_token_budget:
-                break
             request = self._request(normalized_row, assessment_row, source_row)
             input_hash = sha256(
                 json.dumps(request.model_dump(mode="json"), sort_keys=True).encode()
             ).hexdigest()
+            deterministic = extract_official_facts(request, completed_at=now)
+            if deterministic is not None:
+                self._validate_result(request, deterministic)
+                self._persist_success(
+                    normalized_row,
+                    deterministic,
+                    input_hash=input_hash,
+                    now=now,
+                )
+                succeeded += 1
+                continue
+            if calls >= self.max_calls_per_day or tokens >= self.daily_token_budget:
+                break
             try:
                 result = await self.provider.extract(request)
                 self._validate_result(request, result)
@@ -286,6 +314,8 @@ class EvidenceExtractionService:
         }
         self._add_run(
             normalized_row.document_id,
+            provider_name=result.provider_name,
+            model_version=result.model_version,
             status="SUCCEEDED",
             input_hash=input_hash,
             input_tokens=result.input_tokens,
@@ -319,6 +349,8 @@ class EvidenceExtractionService:
     ) -> None:
         self._add_run(
             document_id,
+            provider_name=self.provider.provider_name,
+            model_version=self.model_version,
             status="NEEDS_REVIEW",
             input_hash=input_hash,
             input_tokens=input_tokens,
@@ -333,6 +365,8 @@ class EvidenceExtractionService:
         self,
         document_id: str,
         *,
+        provider_name: str,
+        model_version: str,
         status: str,
         input_hash: str,
         input_tokens: int,
@@ -342,24 +376,25 @@ class EvidenceExtractionService:
         completed_at: datetime,
         payload: dict[str, Any],
     ) -> None:
-        key = (
-            f"{document_id}:{self.provider.provider_name}:"
-            f"{self.model_version}:{self.prompt_version}"
-        )
+        key = f"{document_id}:{provider_name}:{model_version}:{self.prompt_version}"
         self.session.add(
             AIExtractionRunRow(
                 extraction_run_id=str(uuid5(NAMESPACE_URL, key)),
                 workspace_id=self.workspace_id,
                 document_id=document_id,
                 status=status,
-                provider_name=self.provider.provider_name,
-                model_version=self.model_version,
+                provider_name=provider_name,
+                model_version=model_version,
                 prompt_version=self.prompt_version,
                 input_sha256=input_hash,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 elapsed_ms=elapsed_ms,
-                attempts=int(getattr(self.provider, "last_attempts", 1)),
+                attempts=(
+                    int(getattr(self.provider, "last_attempts", 1))
+                    if provider_name == self.provider.provider_name
+                    else 1
+                ),
                 error_code=error_code,
                 completed_at=completed_at,
                 schema_version="1.0",

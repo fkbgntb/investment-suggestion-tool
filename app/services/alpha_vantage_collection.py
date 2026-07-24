@@ -208,7 +208,11 @@ class AlphaVantageCollectionService:
             truncated=adapter.last_truncated or len(result.documents) >= remaining_documents,
             next_cursor=result.next_cursor,
         )
-        summary = {**asdict(outcome), "query_sha256": adapter.last_query_sha256}
+        summary = {
+            **asdict(outcome),
+            "query_sha256": adapter.last_query_sha256,
+            "focus_ticker": adapter.last_focus_ticker,
+        }
         self.runs.mark_succeeded(
             workspace_id=self.workspace_id,
             crawl_run_id=crawl_run_id,

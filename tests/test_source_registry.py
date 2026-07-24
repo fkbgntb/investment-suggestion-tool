@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -63,6 +63,13 @@ def test_source_crud_disable_health_cursor_and_audit(tmp_path: Path) -> None:
             created = service.create(source())
             assert service.get(created.source_id) == created
             assert service.list_schedulable() == (created,)
+            now = datetime(2026, 7, 20, tzinfo=UTC)
+            assert service.list_due(now=now) == (created,)
+            service.record_health(
+                service.health(created.source_id).model_copy(update={"last_success_at": now})
+            )
+            assert service.list_due(now=now + timedelta(hours=2)) == ()
+            assert service.list_due(now=now + timedelta(hours=3)) == (created,)
             assert service.health(created.source_id).status is SourceHealthStatus.UNKNOWN
 
             state = service.advance_cursor(
