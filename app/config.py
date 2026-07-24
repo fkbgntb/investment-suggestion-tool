@@ -139,6 +139,22 @@ class Settings(BaseSettings):
                 "non-loopback binding requires INVEST_ALLOW_PUBLIC_BIND=true and a security review"
             )
 
+        proxy_url = self.collector_proxy_url
+        if proxy_url is not None and (
+            proxy_url.scheme != "http"
+            or proxy_url.host is None
+            or not _is_loopback_host(proxy_url.host)
+            or proxy_url.port is None
+            or proxy_url.username is not None
+            or proxy_url.password is not None
+            or proxy_url.path not in {None, "", "/"}
+            or proxy_url.query is not None
+            or proxy_url.fragment is not None
+        ):
+            raise ValueError(
+                "collector proxy must be a credential-free local HTTP endpoint with a port"
+            )
+
         resolved_data_dir = self.data_dir.expanduser().resolve()
         if self.require_external_data_dir:
             system_drive = os.environ.get("SYSTEMDRIVE", "C:")

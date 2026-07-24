@@ -143,6 +143,87 @@ def test_revalidates_dns_and_blocks_redirect_to_private_address() -> None:
     assert resolver.calls == [("example.com", 443), ("metadata.example", 443)]
 
 
+def test_local_proxy_owns_target_dns_but_redirects_remain_host_allowlisted() -> None:
+    resolver = StaticResolver(
+        {
+            "example.com": ("198.18.0.1",),
+            "cdn.example.com": ("198.18.0.2",),
+        }
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "example.com":
+            return httpx.Response(
+                302,
+                headers={"Location": "https://cdn.example.com/article"},
+                request=request,
+            )
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "text/plain"},
+            content=b"proxy resolved target",
+            request=request,
+        )
+
+    async def scenario() -> None:
+        async with SafeHTTPClient(
+            resolver=resolver,
+            proxy_url="http://127.0.0.1:7897",
+            transport=httpx.MockTransport(handler),
+        ) as client:
+            result = await client.fetch(
+                "https://example.com/start",
+                policy(allowed_hosts=("example.com", "cdn.example.com")),
+            )
+            assert result.body == b"proxy resolved target"
+            with pytest.raises(SafeFetchError) as captured:
+                await client.fetch(
+                    "https://example.com/start",
+                    policy(allowed_hosts=("example.com",)),
+                )
+            assert captured.value.error_code is FetchErrorCode.HOST_REJECTED
+
+    run(scenario())
+    assert resolver.calls == []
+
+
+@pytest.mark.parametrize(
+    "proxy_url",
+    (
+        "https://127.0.0.1:7897",
+        "http://proxy.example:7897",
+        "http://user:pass@127.0.0.1:7897",
+        "http://127.0.0.1:7897/path",
+        "http://127.0.0.1",
+    ),
+)
+def test_proxy_endpoint_must_be_credential_free_local_http(proxy_url: str) -> None:
+    with pytest.raises(ValueError, match="proxy"):
+        SafeHTTPClient(proxy_url=proxy_url)
+
+
+def test_proxy_startup_failure_is_retried_and_classified_separately() -> None:
+    attempts = 0
+
+    def unavailable(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.ConnectError("local proxy route is not ready", request=request)
+
+    async def scenario() -> None:
+        async with SafeHTTPClient(
+            proxy_url="http://127.0.0.1:7897",
+            transport=httpx.MockTransport(unavailable),
+        ) as client:
+            with pytest.raises(SafeFetchError) as captured:
+                await client.fetch("https://example.com", policy())
+            assert captured.value.error_code is FetchErrorCode.PROXY_DNS_NOT_READY
+            assert captured.value.retryable is True
+
+    run(scenario())
+    assert attempts == 2
+
+
 def test_limits_redirect_count_response_size_and_content_type() -> None:
     def redirects(request: httpx.Request) -> httpx.Response:
         return httpx.Response(302, headers={"Location": "/again"}, request=request)

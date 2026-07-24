@@ -1970,6 +1970,7 @@
         "HOST_REJECTED",
         "PORT_REJECTED",
         "DNS_FAILED",
+        "PROXY_DNS_NOT_READY",
         "ADDRESS_REJECTED",
         "REDIRECT_REJECTED",
         "REDIRECT_LIMIT",

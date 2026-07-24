@@ -70,3 +70,19 @@ def test_collector_proxy_is_optional_and_typed() -> None:
     assert str(proxied.collector_proxy_url) == "http://127.0.0.1:7897/"
     assert build_safe_http_client(direct)._proxy_url is None
     assert build_safe_http_client(proxied)._proxy_url == "http://127.0.0.1:7897/"
+
+
+@pytest.mark.parametrize(
+    "proxy_url",
+    (
+        "https://127.0.0.1:7897",
+        "http://proxy.example:7897",
+        "http://user:pass@127.0.0.1:7897",
+        "http://127.0.0.1:7897/path",
+    ),
+)
+def test_collector_proxy_rejects_nonlocal_or_credentialed_endpoints(
+    proxy_url: str,
+) -> None:
+    with pytest.raises(ValueError, match="collector proxy"):
+        Settings(_env_file=None, collector_proxy_url=proxy_url)
