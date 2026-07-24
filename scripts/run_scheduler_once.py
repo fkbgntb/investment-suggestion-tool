@@ -13,13 +13,12 @@ from app.collectors.registry import build_default_adapter_registry
 from app.collectors.sec import SECCompany
 from app.config import Settings
 from app.services.alpha_vantage_collection import AlphaVantageCollectionService
-from app.services.analysis_synthesis import AnalysisSynthesisService, build_synthesis_provider
 from app.services.evidence_extraction import EvidenceExtractionService, build_evidence_provider
 from app.services.evidence_scoring import EvidenceScoringService
 from app.services.gdelt_collection import GDELTCollectionService
 from app.services.normalization import NormalizationService
 from app.services.relevance import RelevanceService
-from app.services.reports import ReportService
+from app.services.report_triggers import ReportTriggerBatch, ScheduledReportTriggerService
 from app.services.scheduler import DurableJobScheduler, WindowCollectionResult
 from app.services.sec_collection import SECCollectionService
 from app.services.sources import SourceService
@@ -131,8 +130,7 @@ async def run(*, force: bool = False) -> int:
         relevance_counts = (0, 0, 0)
         extraction_counts = (0, 0, 0)
         scoring_counts = (0, 0, 0)
-        synthesis_counts = (0, 0, 0)
-        report_counts = (0, 0)
+        report_triggers = ReportTriggerBatch()
         normalized_at = datetime.now(UTC)
         with database.session() as session:
             tasks = TaskQueueRepository(session, settings.portfolio_workspace_id).list_due(
@@ -147,9 +145,6 @@ async def run(*, force: bool = False) -> int:
                     if batch[0] + batch[2] < 500:
                         break
                 normalization_counts = tuple(totals)
-                task_repository = TaskQueueRepository(session, settings.portfolio_workspace_id)
-                for task in tasks:
-                    task_repository.mark_succeeded(task.task_id, finished_at=normalized_at)
             try:
                 relevance_counts = RelevanceService(
                     session, settings.portfolio_workspace_id
@@ -173,22 +168,11 @@ async def run(*, force: bool = False) -> int:
             scoring_counts = EvidenceScoringService(
                 session, settings.portfolio_workspace_id
             ).score_pending(now=normalized_at)
-            synthesis_provider = build_synthesis_provider(settings)
-            synthesis_counts = await AnalysisSynthesisService(
+            report_triggers = await ScheduledReportTriggerService(
                 session,
                 settings.portfolio_workspace_id,
-                synthesis_provider,
-                model_version=(
-                    settings.deepseek_model
-                    if settings.deepseek_api_key is not None
-                    else "rules-1.0.0"
-                ),
-                max_calls_per_day=settings.deepseek_synthesis_max_calls_per_day,
-                daily_token_budget=settings.deepseek_synthesis_daily_token_budget,
-            ).synthesize_pending(now=normalized_at)
-            report_counts = await ReportService(
-                session, settings.portfolio_workspace_id
-            ).generate_pending(now=normalized_at)
+                settings,
+            ).consume_due(now=normalized_at)
     finally:
         database.dispose()
     print(f"scheduler status: {outcome.status}")
@@ -208,11 +192,9 @@ async def run(*, force: bool = False) -> int:
     print(f"evidence scores created: {scoring_counts[0]}")
     print(f"positive evidence: {scoring_counts[1]}")
     print(f"negative evidence: {scoring_counts[2]}")
-    print(f"analyses completed: {synthesis_counts[0]}")
-    print(f"degraded analyses: {synthesis_counts[1]}")
-    print(f"synthesis budget fallbacks: {synthesis_counts[2]}")
-    print(f"reports generated: {report_counts[0]}")
-    print(f"stale reports generated: {report_counts[1]}")
+    print(f"reports generated: {report_triggers.generated}")
+    print(f"report triggers skipped: {report_triggers.skipped}")
+    print(f"report triggers failed: {report_triggers.failed}")
     return 0 if outcome.status in {"SUCCEEDED", "NOT_DUE", "LOCKED"} else 1
 
 

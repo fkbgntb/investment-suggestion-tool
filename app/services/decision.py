@@ -331,6 +331,7 @@ class DecisionRunService:
         position_snapshot_id: str,
         now: datetime,
         parameters: DecisionPolicyParameters | None = None,
+        idempotency_key_override: str | None = None,
     ) -> DecisionResult:
         policy = DeterministicDecisionPolicy(decided_at=now, parameters=parameters)
         scoring_versions = sorted({score.scoring_version for score in context.scores})
@@ -348,7 +349,9 @@ class DecisionRunService:
                 input_snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")
             ).encode("utf-8")
         ).hexdigest()
-        idempotency_key = f"decision-{digest[:48]}"
+        idempotency_key = idempotency_key_override or f"decision-{digest[:48]}"
+        if len(idempotency_key) > 128:
+            raise ValueError("analysis idempotency key exceeds storage boundary")
         existing = self.session.scalar(
             select(AnalysisRunRow).where(
                 AnalysisRunRow.workspace_id == self.workspace_id,

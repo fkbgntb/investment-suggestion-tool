@@ -85,6 +85,11 @@ class JobView(BaseModel):
     status: str
     not_before: datetime
     finished_at: datetime | None = None
+    report_outcome: str | None = None
+    report_reason: str | None = None
+    considered_evidence_count: int | None = None
+    new_evidence_count: int | None = None
+    report_id: str | None = None
 
 
 class PublicSettingsView(BaseModel):
@@ -315,6 +320,36 @@ def jobs(request: Request, limit: int = 100) -> tuple[JobView, ...]:
                 status=row.status,
                 not_before=row.not_before,
                 finished_at=row.finished_at,
+                report_outcome=(
+                    str(row.payload["result"].get("status"))
+                    if isinstance(row.payload.get("result"), dict)
+                    and row.payload["result"].get("status")
+                    else None
+                ),
+                report_reason=(
+                    str(row.payload["result"].get("reason"))
+                    if isinstance(row.payload.get("result"), dict)
+                    and row.payload["result"].get("reason")
+                    else None
+                ),
+                considered_evidence_count=(
+                    int(row.payload["result"].get("considered_evidence_count", 0))
+                    if isinstance(row.payload.get("result"), dict)
+                    and "considered_evidence_count" in row.payload["result"]
+                    else None
+                ),
+                new_evidence_count=(
+                    int(row.payload["result"].get("new_evidence_count", 0))
+                    if isinstance(row.payload.get("result"), dict)
+                    and "new_evidence_count" in row.payload["result"]
+                    else None
+                ),
+                report_id=(
+                    str(row.payload["result"].get("report_id"))
+                    if isinstance(row.payload.get("result"), dict)
+                    and row.payload["result"].get("report_id")
+                    else None
+                ),
             )
             for row in rows
         )

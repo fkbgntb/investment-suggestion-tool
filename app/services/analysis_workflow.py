@@ -13,16 +13,14 @@ from app.config import Settings
 from app.domain.analysis import DecisionContext, PositionRiskSnapshot, RiskConstraints
 from app.domain.base import Money
 from app.domain.enums import FeeDataStatus
-from app.domain.evidence import Evidence, EvidenceScore
 from app.services.analysis_synthesis import AnalysisSynthesisService, build_synthesis_provider
 from app.services.decision import DecisionRunService
+from app.services.evidence_selection import EffectiveEvidenceSelector, EvidenceSelection
 from app.services.portfolio import PortfolioService
 from app.services.reports import ReportService
 from app.storage.models import (
     AnalysisResultRow,
     DecisionResultRow,
-    EvidenceItemRow,
-    EvidenceScoreRow,
     ReportRow,
 )
 
@@ -50,6 +48,8 @@ class AnalysisWorkflowService:
         now: datetime,
         maximum_topic_weight: Decimal = Decimal("0.35"),
         target_topic_weight: Decimal = Decimal("0.25"),
+        evidence_selection: EvidenceSelection | None = None,
+        trigger_fingerprint: str | None = None,
     ) -> tuple[DecisionResultRow, AnalysisResultRow, ReportRow]:
         if now.tzinfo is None:
             raise AnalysisWorkflowError("analysis time must include a timezone")
@@ -64,9 +64,17 @@ class AnalysisWorkflowService:
         if target_topic_weight > maximum_topic_weight:
             raise AnalysisWorkflowError("target topic weight cannot exceed its maximum")
 
+        selected = evidence_selection or EffectiveEvidenceSelector(
+            self.session, self.workspace_id
+        ).select(
+            now=now,
+            position=position,
+            report_date=now.date(),
+        )
+        evidence = selected.evidence
+        scores = selected.scores
+        data_as_of = selected.data_as_of
         snapshot = portfolio.create_analysis_snapshot(position_id, generated_at=now)
-        evidence, scores = self._latest_evidence()
-        data_as_of = max((score.scored_at for score in scores), default=now)
         cost = position.cost_basis.amount
         current = position.current_value.amount
         unrealized = (current - cost) / cost
@@ -135,6 +143,11 @@ class AnalysisWorkflowService:
             context,
             position_snapshot_id=snapshot.snapshot_id,
             now=now,
+            idempotency_key_override=(
+                f"scheduled-report-{trigger_fingerprint[:48]}"
+                if trigger_fingerprint is not None
+                else None
+            ),
         )
         decision_row = self.session.scalar(
             select(DecisionResultRow).where(
@@ -173,29 +186,3 @@ class AnalysisWorkflowService:
         if analysis_row is None or report_row is None:
             raise AnalysisWorkflowError("analysis report pipeline did not complete")
         return decision_row, analysis_row, report_row
-
-    def _latest_evidence(
-        self, *, limit: int = 100
-    ) -> tuple[tuple[Evidence, ...], tuple[EvidenceScore, ...]]:
-        rows = self.session.execute(
-            select(EvidenceItemRow, EvidenceScoreRow)
-            .join(
-                EvidenceScoreRow,
-                (EvidenceScoreRow.workspace_id == EvidenceItemRow.workspace_id)
-                & (EvidenceScoreRow.evidence_id == EvidenceItemRow.evidence_id),
-            )
-            .where(EvidenceItemRow.workspace_id == self.workspace_id)
-            .order_by(EvidenceScoreRow.created_at.desc(), EvidenceItemRow.evidence_id)
-        ).all()
-        latest: dict[str, tuple[Evidence, EvidenceScore]] = {}
-        for evidence_row, score_row in rows:
-            if evidence_row.evidence_id in latest:
-                continue
-            latest[evidence_row.evidence_id] = (
-                Evidence.model_validate(evidence_row.payload),
-                EvidenceScore.model_validate(score_row.payload),
-            )
-            if len(latest) >= limit:
-                break
-        values = tuple(latest.values())
-        return tuple(item[0] for item in values), tuple(item[1] for item in values)

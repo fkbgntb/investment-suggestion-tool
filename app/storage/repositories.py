@@ -738,7 +738,13 @@ class TaskQueueRepository:
             ).all()
         )
 
-    def mark_succeeded(self, task_id: str, *, finished_at: datetime) -> bool:
+    def mark_succeeded(
+        self,
+        task_id: str,
+        *,
+        finished_at: datetime,
+        result: dict[str, Any] | None = None,
+    ) -> bool:
         row = self.session.scalar(
             select(ScheduledTaskRow).where(
                 ScheduledTaskRow.workspace_id == self.workspace_id,
@@ -750,6 +756,32 @@ class TaskQueueRepository:
             return False
         row.status = "SUCCEEDED"
         row.finished_at = finished_at
+        if result is not None:
+            row.payload = {**row.payload, "result": result}
+        row.updated_at = finished_at
+        self.session.flush()
+        return True
+
+    def mark_failed(
+        self,
+        task_id: str,
+        *,
+        finished_at: datetime,
+        result: dict[str, Any],
+        retryable: bool = True,
+    ) -> bool:
+        row = self.session.scalar(
+            select(ScheduledTaskRow).where(
+                ScheduledTaskRow.workspace_id == self.workspace_id,
+                ScheduledTaskRow.task_id == task_id,
+                ScheduledTaskRow.status == "PENDING",
+            )
+        )
+        if row is None:
+            return False
+        row.status = "RETRYABLE_FAILED" if retryable else "PERMANENT_FAILED"
+        row.finished_at = finished_at
+        row.payload = {**row.payload, "result": result}
         row.updated_at = finished_at
         self.session.flush()
         return True
