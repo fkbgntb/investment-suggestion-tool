@@ -21,7 +21,13 @@ from tests.domain_factories import report
 NOW = datetime(2026, 7, 20, 12, 0, tzinfo=UTC)
 
 
-def crawl_outcome(*, failed: int = 0) -> ManualPipelineOutcome:
+def crawl_outcome(
+    *,
+    failed: int = 0,
+    report_outcome: str | None = None,
+    report_reason: str | None = None,
+    report_id: str | None = None,
+) -> ManualPipelineOutcome:
     return ManualPipelineOutcome(
         source_count=2,
         failed_source_count=failed,
@@ -35,6 +41,9 @@ def crawl_outcome(*, failed: int = 0) -> ManualPipelineOutcome:
         extraction_count=1,
         extraction_review_count=0,
         scored_count=1,
+        report_outcome=report_outcome,
+        report_reason=report_reason,
+        report_id=report_id,
     )
 
 
@@ -151,3 +160,31 @@ def test_first_shadow_record_and_audit_are_advisory_only(monkeypatch) -> None:
         "failed_source_count": 0,
         "advisory_only": True,
     }
+
+
+def test_shadow_record_reuses_latest_report_when_trigger_skips() -> None:
+    current = report()
+    session = MagicMock()
+    session.scalar.side_effect = [0] * 9
+    session.execute.return_value.one.return_value = (0, 0)
+    metrics = collect_quality_metrics(session, "personal", now=NOW)
+    record = build_shadow_record(
+        position_id="position-007300",
+        report=current,
+        previous_report=current,
+        difference=None,
+        crawl=crawl_outcome(
+            report_outcome="SKIPPED_NO_NEW_EVIDENCE",
+            report_reason="no new effective evidence",
+        ),
+        metrics=metrics,
+        started_at=NOW,
+        finished_at=NOW + timedelta(minutes=1),
+    )
+
+    assert record.report_id == current.report_id
+    assert record.decision_changed is False
+    assert record.change_reasons == (
+        "no new report: SKIPPED_NO_NEW_EVIDENCE",
+        "no new effective evidence",
+    )

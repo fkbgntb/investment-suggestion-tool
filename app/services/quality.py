@@ -158,6 +158,10 @@ def build_shadow_record(
     reasons: list[str] = []
     if previous_report is None:
         reasons.append("initial shadow record")
+    elif previous_report.report_id == report.report_id:
+        reasons.append(f"no new report: {crawl.report_outcome or 'NO_REPORT_TRIGGERED'}")
+        if crawl.report_reason:
+            reasons.append(crawl.report_reason)
     elif difference is None:
         reasons.append("report was regenerated without a comparable predecessor")
     else:
@@ -172,7 +176,13 @@ def build_shadow_record(
             reasons.append("supporting evidence set unchanged")
     analysis: AnalysisResult = report.analysis
     return ShadowRunRecord(
-        shadow_run_id=str(uuid5(NAMESPACE_URL, f"shadow:{report.report_id}")),
+        shadow_run_id=str(
+            uuid5(
+                NAMESPACE_URL,
+                f"shadow:{position_id}:{report.report_id}:{started_at.isoformat()}:"
+                f"{finished_at.isoformat()}",
+            )
+        ),
         started_at=started_at,
         finished_at=finished_at,
         position_id=position_id,

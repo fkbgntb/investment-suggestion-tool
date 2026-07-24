@@ -136,6 +136,7 @@ def test_manual_pipeline_isolates_sources_and_processes_pending(monkeypatch, tmp
         "report_failed_count": 0,
         "report_outcome": None,
         "report_reason": None,
+        "report_id": None,
     }
 
 

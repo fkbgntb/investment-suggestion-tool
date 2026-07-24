@@ -8,9 +8,6 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.config import Settings
-from app.domain.analysis import Report
-from app.domain.base import Money
-from app.services.analysis_workflow import AnalysisWorkflowService
 from app.services.manual_pipeline import run_manual_pipeline
 from app.services.quality import (
     build_shadow_record,
@@ -32,6 +29,7 @@ async def run(position_id: str | None, portfolio_value: Decimal | None) -> int:
     reference_value = portfolio_value or settings.portfolio_reference_value
     if reference_value is None:
         raise ValueError("set INVEST_PORTFOLIO_REFERENCE_VALUE or pass --portfolio-value")
+    effective_settings = settings.model_copy(update={"portfolio_reference_value": reference_value})
     database = Database(settings.database_url)
     started_at = datetime.now(UTC)
     try:
@@ -47,23 +45,24 @@ async def run(position_id: str | None, portfolio_value: Decimal | None) -> int:
             )
             previous_report = previous_values[0] if previous_values else None
 
-        crawl = await run_manual_pipeline(database, settings, now=datetime.now(UTC))
+        crawl = await run_manual_pipeline(database, effective_settings, now=datetime.now(UTC))
         with database.session() as session:
-            _, _, report_row = await AnalysisWorkflowService(
-                session,
-                settings.portfolio_workspace_id,
-                settings,
-            ).run(
-                position_id=selected,
-                portfolio_value=Money(amount=reference_value, currency="CNY"),
-                now=datetime.now(UTC),
-            )
-            report = Report.model_validate(report_row.payload)
+            reports = ReportService(session, settings.portfolio_workspace_id)
+            if crawl.report_id is not None:
+                saved = reports.get(crawl.report_id)
+                if saved is None:
+                    raise RuntimeError("the generated report could not be loaded")
+                report, _ = saved
+            else:
+                latest = reports.list_reports(limit=1)
+                if not latest:
+                    raise RuntimeError(
+                        "the pipeline did not generate a report and no prior report exists"
+                    )
+                report = latest[0]
             difference = None
             if previous_report is not None and previous_report.report_id != report.report_id:
-                difference = ReportService(session, settings.portfolio_workspace_id).diff(
-                    previous_report.report_id, report.report_id
-                )
+                difference = reports.diff(previous_report.report_id, report.report_id)
             finished_at = datetime.now(UTC)
             metrics = collect_quality_metrics(
                 session, settings.portfolio_workspace_id, now=finished_at

@@ -46,6 +46,7 @@ class ManualPipelineOutcome:
     report_failed_count: int = 0
     report_outcome: str | None = None
     report_reason: str | None = None
+    report_id: str | None = None
 
     def as_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -191,4 +192,5 @@ async def run_manual_pipeline(
         report_failed_count=report_batch.failed,
         report_outcome=latest_outcome.status.value if latest_outcome is not None else None,
         report_reason=latest_outcome.reason if latest_outcome is not None else None,
+        report_id=latest_outcome.report_id if latest_outcome is not None else None,
     )
